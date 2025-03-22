@@ -1,0 +1,209 @@
+/*320*/
+@media screen and (max-width: 459px) {
+	.modal-content {
+		width: 80%;
+	}
+	#center{
+		margin: 0;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-right: -50%;
+		transform: translate(-50%, -50%);
+		width: 80%;
+		text-align: left;
+	}
+	.boxchildareacoverage {
+		float: left;
+		width: 30%;
+		padding: 0 4px;
+	}
+	.boxareacoverage {
+		width: 100%;
+	}
+	.imgIndex{
+		
+	}
+	#scan{
+		width:100%;
+		height:400px;
+	}
+	.grid-view, .sort-link{
+		font-size: 10px !important;
+	}
+	.boxareacoverage{
+		width:98%;
+	}
+	.titlecoverage {
+		font-size: 10px;
+	}
+	.boxareacoverage {
+		width: 100%;
+	}
+	
+	.boxbutton{
+		width:100%;
+	}
+	.childboxbutton{
+
+	}
+	.perbox2{
+		float:left;
+		width:30%;
+	}
+	.perbox4{
+		float:left;
+		width:25%;
+	}
+	.buttonheight1{
+		height:80px;
+	}
+}
+
+/*480*/
+@media screen and (min-width: 460px) {
+	.modal-content {
+		width: 80%;
+	}
+	#center{
+		margin: 0;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-right: -50%;
+		transform: translate(-50%, -50%);
+		width: 400px;
+		text-align: left;
+	}
+	.boxchildareacoverage {
+		float: left;
+		width: 30%;
+		display: block;
+		padding: 0 4px;
+	}
+	#scan{
+		width:100%;
+		height:400px;
+	}
+	.grid-view, .sort-link{
+		font-size: 10px !important;
+	}
+	.boxareacoverage{
+		width: 80%;
+	}
+	.titlecoverage {
+		font-size: 12px;
+	}
+	
+	.boxbutton{
+		width:100%;
+	}
+	.childboxbutton{
+
+	}
+	.perbox2{
+		float:left;
+		width:30%;
+	}
+	.perbox4{
+		float:left;
+		width:25%;
+	}
+	.buttonheight1{
+		height:80px;
+	}
+}
+
+/*600*/
+@media screen and (min-width: 560px) {
+	.modal-content {
+		width: 60%;
+	}
+	#center{
+		top: 40%;
+	}
+	.boxchildareacoverage {
+		width: 30%;
+		display: block;
+		padding: 0 4px;
+	}
+	#scan{
+		margin-left:auto;
+		margin-right:auto;
+		text-align:center;
+		width:50%;
+		height:400px;
+	}
+	.grid-view, .sort-link{
+		font-size: 13px !important;
+	}
+	.titlecoverage {
+		font-size: 14px;
+	}
+	.buttonheight1{
+		height:60px;
+	}
+	.perbox4{
+		float:left;
+		width:20%;
+	}
+}
+
+/*768*/
+@media screen and (min-width: 730px) {
+	.modal-content {
+		width: 30%;
+	}
+	.boxchildareacoverage {
+		float: left;
+		width: 30%;
+		padding: 0 4px;
+	}
+	.boxareacoverage{
+		width: 70%;
+	}
+	.perbox4{
+		float:left;
+		width:15%;
+	}
+
+}
+
+/*800px*/
+@media screen and (min-width: 780px) {
+	#center{
+		top: 50%;
+	}
+	.boxchildareacoverage {
+		float: left;
+		width: 30%;
+		padding: 0 5px;
+	}
+	.perbox4{
+		float:left;
+		width:12%;
+	}
+	.brand {
+		display: none !important;
+	}
+}
+
+/*1024*/
+@media screen and (min-width: 1010px) {
+	.boxchildareacoverage {
+		float: left;
+		width: 30%;
+		padding: 0 5px;
+	}
+	.boxareacoverage{
+		width: 50%;
+	}
+	.perbox4{
+		float:left;
+		width:10%;
+	}
+}
+
+/*1280*/
+@media screen and (min-width: 1150px) {
+}

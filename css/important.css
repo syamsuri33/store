@@ -1,0 +1,105 @@
+#page {
+    border: 0px !important;
+    margin-bottom: 0px !important;
+    margin-top: 0px !important;
+}
+
+.dropdown-menu {
+	background-color: #4064ac !important;
+}
+
+.navbar-inner{
+	box-shadow: none !important;
+	border-color: #fff !important;
+}
+.dropdown-menu > li > a:hover, .dropdown-menu > .active > a{
+	background-image: linear-gradient(to bottom, #ffffff, #ffffff) !important;
+	color: #4064ac !important;
+}
+
+.navbar-inverse .nav-collapse .nav > li > a:hover,
+.navbar-inverse .nav-collapse .nav > li > a:focus,
+.navbar-inverse .nav-collapse .nav > ul > li > a:focus,
+.navbar-inverse .nav-collapse .dropdown-menu a:hover,
+.navbar-inverse .nav-collapse .dropdown-menu a:focus {
+	color: #4064ac !important;
+	background-color: white !important;
+}
+
+
+/*Important MENU DROPDOWN if mobile view must click and if dekstop view hover menu show*/
+@media (min-width: 768px) {
+    .dropdown:hover .dropdown-menu {
+        display: block !important;
+		background-color: #4064ac !important;
+    }
+ } 
+
+#header {
+    border-top: 0px;
+}
+body{
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+	font-family: Helvetica !important;
+}
+#page{
+	background-color: #ececec;;
+}
+#content {
+    /*padding-top: 40px;*/
+	min-height: 230px;
+}
+.container{
+	width:100% !important;
+} 
+.navbar-fixed-top {
+    top: unset !important;
+	margin-bottom: 0 !important;
+	position: static !important;
+}
+.iconmedsos{
+	width:50px;
+}
+
+.btn {
+	border-radius:2px !important;
+	box-shadow:0px !important;
+}
+
+.btn-navbar{
+	margin-right:10px !important;
+}
+
+#logo{
+	background-color: #4064ac;
+}
+/*menu brand logo hidden*/
+.navbar .brand {
+    /*display: none !important;*/
+	float: right !important;
+	color: #fffbfb !important;
+}
+#bgfooterlogin{
+	/*background-color: #4064ac;*/
+	background-color: transparent;
+   /* background-image: linear-gradient(to bottom, #222222, #111111);*/
+	bottom: 0;
+    position: fixed;
+    width: 100%;
+}
+#bgfooter{
+	background-color: #4064ac;
+    /*background-image: linear-gradient(to bottom, #222222, #111111);*/
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+#footer{
+	margin:0px;
+	color:white;
+}
+.footerbottom{
+	position: relative;
+	min-height: 100vh;
+}
