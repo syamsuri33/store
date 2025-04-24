@@ -1,0 +1,26 @@
+update table
+=========================================================================
+20 April 2024
+=========================================================================
+	ALTER TABLE  pembeliandetail ADD StatusAktif int(11) DEFAULT 1 NULL;
+	
+	ALTER TABLE  minoutline ADD HargaOffline DOUBLE NULL;
+	ALTER TABLE  minoutline ADD HargaGrosir DOUBLE NULL;
+	ALTER TABLE  minoutline ADD HargaTokped DOUBLE NULL;
+
+	ALTER TABLE  pembelian ADD StatusAktif INT(11) NULL;
+	
+	CREATE TABLE  penjualandetaillog (
+		PenjualanDetailLog_ID BIGINT(20) auto_increment NOT NULL,
+		Barang_ID BIGINT(20) NULL,
+		PenjualanDetail_ID BIGINT(20) NULL,
+		Jumlah INT(11) NULL,
+		Jumlah_Awal INT(11) NULL,
+		CONSTRAINT penjualandetaillog_pk PRIMARY KEY (PenjualanDetailLog_ID)
+	)
+	ENGINE=InnoDB
+	DEFAULT CHARSET=latin1
+	COLLATE=latin1_swedish_ci;
+	
+=========================================================================
+
