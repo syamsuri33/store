@@ -177,21 +177,24 @@ class CustomerController extends Controller
 	 */
 	public function actionIndex()
 	{
-		if (isset($_GET['nama'])) {
-			$dataProvider = new CActiveDataProvider('Customer', array(
-				'criteria' => array(
-					'condition' => '((t.Nama LIKE "%' . $_GET['nama'] . '%") OR (t.Alamat LIKE "%' . $_GET['nama'] . '%")) and t.Status=1',
-				),
-				'pagination' => array( 'pageSize' => 10),
-			));
-		} else {
-			$dataProvider = new CActiveDataProvider('Customer', array(
-				'criteria' => array(
-					'condition' => 't.Status=1',
-				),
-				'pagination' => array( 'pageSize' => 10),
-			));
-		}
+		$nama = isset($_GET['nama']) ? $_GET['nama'] : null;
+		$dataProvider = Customer::getDataProvider($nama);
+
+		// if (isset($_GET['nama'])) {
+		// 	$dataProvider = new CActiveDataProvider('Customer', array(
+		// 		'criteria' => array(
+		// 			'condition' => '((t.Nama LIKE "%' . $_GET['nama'] . '%") OR (t.Alamat LIKE "%' . $_GET['nama'] . '%")) and t.Status=1',
+		// 		),
+		// 		'pagination' => array( 'pageSize' => 10),
+		// 	));
+		// } else {
+		// 	$dataProvider = new CActiveDataProvider('Customer', array(
+		// 		'criteria' => array(
+		// 			'condition' => 't.Status=1',
+		// 		),
+		// 		'pagination' => array( 'pageSize' => 10),
+		// 	));
+		// }
 
 		$this->render('index', array(
 			'dataProvider' => $dataProvider,

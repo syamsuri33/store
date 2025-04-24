@@ -34,7 +34,7 @@ class OperasionalController extends Controller
 			),
 			array(
 				'allow', // allow authenticated user to perform 'create' and 'update' actions
-				'actions' => array('create', 'update', 'deletes', 'updateSessionOperasionalDetails', 'exportToExcel'),
+				'actions' => array('create', 'update', 'deletes', 'updateSessionOperasionalDetails', 'exportToExcel', 'getData'),
 				'users' => array('@'),
 			),
 			array(
@@ -187,6 +187,24 @@ class OperasionalController extends Controller
 		Yii::app()->end();
 	}
 
+	public function actionGetData($id)
+	{
+		$model = Operasional::model()->findByPk($id);
+
+		$criteria = new CDbCriteria();
+		$criteria->condition = 'Operasional_ID=:Operasional_ID';
+		$criteria->params = array(':Operasional_ID' => $id);
+		$mOperasionaldetail = Operasionaldetail::model()->findAll($criteria);
+
+		if ($model !== null) {
+			$this->renderPartial('_dataTable', array(
+				'model' => $model,
+				'mOperasionaldetail' => $mOperasionaldetail,
+			), false, true);
+		} else {
+			echo '<p>Data not found.</p>';
+		}
+	}
 
 	public function actionView($id)
 	{
@@ -203,7 +221,7 @@ class OperasionalController extends Controller
 	{
 		if (isset($_POST['operasionalDetails'])) {
 			Yii::app()->session['operasionalDetails'] = json_decode($_POST['operasionalDetails'], true);
-			echo json_encode(['status' => 'success']);
+			echo json_encode(['status' => 'success', 'data' => Yii::app()->session['operasionalDetails']]);
 		} else {
 			echo json_encode(['status' => 'error', 'message' => 'No data provided']);
 		}
@@ -296,12 +314,12 @@ class OperasionalController extends Controller
 	 */
 	public function actionUpdate($id)
 	{
-		echo '<script>console.log("3");</script>';
+		//echo '<script>console.log("1");</script>';
 
-		if (Yii::app()->session['action'] != "update") {
+		if (!isset(Yii::app()->session['action'])) {
 			Yii::app()->session['action'] = "update";
 		}
-		if (Yii::app()->session['Opersional_ID'] != $id) {
+		if (!isset(Yii::app()->session['Opersional_ID']) || Yii::app()->session['Opersional_ID'] != $id) {
 			Yii::app()->session['Opersional_ID'] = $id;
 			Yii::app()->session['operasionalDetails'] = null;
 		}
@@ -309,7 +327,7 @@ class OperasionalController extends Controller
 		$model = $this->loadModel($id); // Load the Operasional model
 		$mOperasionalDtl = new Operasionaldetail;
 
-		if (Yii::app()->session['operasionalDetails'] == null) {
+		if (Yii::app()->session['operasionalDetails'] === null) {
 			$operasionalDetails = Operasionaldetail::model()->findAllByAttributes(array('Operasional_ID' => $model->Operasional_ID));
 			$detailsArray = array();
 			foreach ($operasionalDetails as $detail) {
@@ -325,18 +343,48 @@ class OperasionalController extends Controller
 		}
 
 		if (isset($_POST['Operasional'])) {
-			echo '<script>console.log('.json_encode(Yii::app()->session['operasionalDetails']).');</script>';
+			echo '<script>console.log(4' . json_encode(Yii::app()->session['operasionalDetails']) . ');</script>';
+
+			if (empty(Yii::app()->session['operasionalDetails'])) {
+				//echo '<script>console.log("kosong");</script>';
+				Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DETAIL_EMPTY']);
+				$this->redirect(array('update', 'id' => $id));
+			}
+
+			// Get all existing detail IDs from database
+			$existingDetails = Operasionaldetail::model()->findAllByAttributes(array('Operasional_ID' => $model->Operasional_ID));
+			$existingIds = array();
+			foreach ($existingDetails as $detail) {
+				$existingIds[] = $detail->OperasionalDetail_ID;
+			}
+
+			// Get IDs from request
+			$requestIds = array();
 			foreach (Yii::app()->session['operasionalDetails'] as $detail) {
-				
+				if (isset($detail['id'])) {
+					$requestIds[] = $detail['id'];
+				}
+			}
+
+			// Find IDs to delete (present in DB but not in request)
+			$idsToDelete = array_diff($existingIds, $requestIds);
+			// Delete records not in request
+			if (!empty($idsToDelete)) {
+				$criteria = new CDbCriteria;
+				$criteria->addInCondition('OperasionalDetail_ID', $idsToDelete);
+				Operasionaldetail::model()->deleteAll($criteria);
+			}
+
+			foreach (Yii::app()->session['operasionalDetails'] as $detail) {
 				if (isset($detail['id'])) {
 					// Update existing detail
 					$mOperasionalDtlSave = Operasionaldetail::model()->findByPk($detail['id']);
 					if ($mOperasionalDtlSave) {
-						echo '<script>console.log("Nama: '.$detail['nama'].'");</script>';
+						echo '<script>console.log("Nama: ' . $detail['nama'] . '");</script>';
 						$mOperasionalDtlSave->Nama = $detail['nama'];
 						$mOperasionalDtlSave->Jumlah = $detail['jumlah'];
 						$mOperasionalDtlSave->Total = $detail['total'];
-						echo '<script>console.log("xxx'.$detail['id'].'");</script>';
+						echo '<script>console.log("xxx' . $detail['id'] . '");</script>';
 						if (!$mOperasionalDtlSave->save()) {
 							throw new Exception('Error updating operasional detail.');
 						}
@@ -353,9 +401,9 @@ class OperasionalController extends Controller
 					}
 				}
 			}
-			//Yii::app()->session['operasionalDetails'] = null;
-			//Yii::app()->user->setFlash('success', 'Sukses, Data berhasil disimpan');
-			//$this->redirect(array('index'));
+			Yii::app()->session['operasionalDetails'] = null;
+			Yii::app()->user->setFlash('success', 'Sukses, Data berhasil disimpan');
+			$this->redirect(array('index', 'pageOperasional' => 'operasional'));
 		}
 
 		$this->render('update', array(
@@ -374,13 +422,13 @@ class OperasionalController extends Controller
 	{
 		$model = Operasional::model()->findByPk($id);
 		$model->StatusAktif = 0;
-		
+
 		if ($model->save()) {
 			Yii::app()->user->setFlash('success', Yii::app()->params['FLASH_DELETE_SUCCESS']);
-			$this->redirect(array('index'));
-		}else{
+			$this->redirect(array('index', 'pageOperasional' => 'operasional'));
+		} else {
 			Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DELETE_FAILED']);
-			$this->redirect(array('index'));
+			$this->redirect(array('index', 'pageOperasional' => 'operasional'));
 		}
 	}
 
@@ -391,6 +439,10 @@ class OperasionalController extends Controller
 	{
 
 		$model = new Operasional('search');
+
+
+		Yii::app()->session['Opersional_ID'] = null;
+		Yii::app()->session['operasionalDetails'] = null;
 
 		if (isset($_GET['Operasional'])) {
 			$model->attributes = $_GET['Operasional'];

@@ -47,7 +47,7 @@ class Customer extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
-			'Type' => array(self::BELONGS_TO, 'Customertype', 'CustomerType_ID'), 
+			'type' => array(self::BELONGS_TO, 'Customertype', 'Type'), 
 		);
 	}
 
@@ -96,6 +96,34 @@ class Customer extends CActiveRecord
 		));
 	}
 
+	public static function getDataProvider($nama = null)
+	{
+		$criteria = new CDbCriteria();
+		$criteria->with = array('type');
+		$criteria->together = true;
+
+		$criteria->condition = 't.Status=1';
+
+		if ($nama !== null) {
+			$criteria->addCondition('(t.Nama LIKE :nama OR t.Alamat LIKE :nama OR t.Telepon LIKE :nama OR type.Type LIKE :nama)');
+			$criteria->params[':nama'] = '%' . $nama . '%';
+		}
+
+		return new CActiveDataProvider('Customer', array(
+			'criteria' => $criteria,
+			'sort' => array(
+				'defaultOrder' => 't.Customer_ID DESC',
+				'attributes' => array(
+					'Nama',
+					'Customer_ID',
+					'Alamat',
+					'Telepon',
+					'type.Type'
+				),
+			),
+		));
+	}
+	
 	/**
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!

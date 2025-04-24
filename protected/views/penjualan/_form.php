@@ -1,7 +1,15 @@
 <style>
-	#printArea{
-		display:none;
+	#printArea {
+		display: none;
 	}
+
+	.disabled-dropdown {
+		background-color: #eee;
+		cursor: not-allowed;
+		opacity: 0.8;
+		pointer-events: none;
+	}
+
 </style>
 <div class="form">
 	<?php $form = $this->beginWidget('CActiveForm', array(
@@ -25,6 +33,24 @@
 			<?php echo $form->dateField($model, 'Tanggal', array('class' => 'form-control date-picker', 'readonly' => 'readonly')); ?>
 			<?php echo $form->error($model, 'Tanggal'); ?>
 		</div>
+		<div class="form-group">
+			<?php echo $form->labelEx($model, 'Customer_ID'); ?>
+			<?php echo $form->dropDownList(
+				$model,
+				'Customer_ID',
+				$customerList,
+				array(
+					'prompt' => 'Select Customer',
+					'class' => 'form-control',
+					'id' => 'Penjualan_Customer_ID',
+					'onchange' => 'updateHarga(this.value, $("#PenjualanDetail_MasterBarang_ID").val(), $("#PenjualanDetail_Penjualan_Dari").val(), $("#PenjualanDetail_Satuan_ID").val());',
+				)
+			); ?>
+			<?php echo CHtml::hiddenField('Customer_ID_hidden', '', array('id' => 'Customer_ID_hidden')); ?>
+			<?php echo $form->error($model, 'Customer_ID'); ?>
+		</div>
+
+
 		<div class="row">
 			<div class="col-sm-4">
 				<!-- Add PenjualanDetail Form Fields -->
@@ -55,7 +81,7 @@
 							'prompt' => 'Select Satuan',
 							'class' => 'form-control',
 							'id' => 'PenjualanDetail_Satuan_ID',
-							'onchange' => 'updateHarga($("#PenjualanDetail_MasterBarang_ID").val(), $("#PenjualanDetail_Penjualan_Dari").val(), this.value);',
+							'onchange' => 'updateHarga($("#Penjualan_Customer_ID").val(), $("#PenjualanDetail_MasterBarang_ID").val(), $("#PenjualanDetail_Penjualan_Dari").val(), this.value);',
 						)
 					); ?>
 				</div>
@@ -81,7 +107,7 @@
 					), array(
 						'class' => 'form-control',
 						'id' => 'PenjualanDetail_Penjualan_Dari',
-						'onchange' => 'updateHarga($("#PenjualanDetail_MasterBarang_ID").val(), this.value, $("#PenjualanDetail_Satuan_ID").val());',
+						'onchange' => 'updateHarga($("#Penjualan_Customer_ID").val(), $("#PenjualanDetail_MasterBarang_ID").val(), this.value, $("#PenjualanDetail_Satuan_ID").val());',
 					)); ?>
 				</div>
 			</div>
@@ -127,7 +153,7 @@
 					<th style="width: 80px;"></th>
 				</tr>
 				<tr>
-					<td colspan="4"  style="text-align: center; font-weight: bold;">PT ALFAMART</td>
+					<td colspan="4" style="text-align: center; font-weight: bold;">Dyoz.&</td>
 				</tr>
 				<tr>
 					<td colspan="4">==============================================</td>
@@ -259,8 +285,25 @@
 					var lastIndex = penjualanDetails.length - 1;
 					penjualanDetails.splice(lastIndex, 1);
 
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo Yii::app()->createUrl("penjualan/updateSessionPenjualanDetails"); ?>',
+						data: {
+							penjualanDetails: JSON.stringify(penjualanDetails)
+						},
+						success: function(response) {
+							var result = JSON.parse(response);
+							if (result.status === 'success') {
+								console.log('Session updated successfully after removal');
+							} else {
+								console.error('Error updating session after removal:', result.message);
+							}
+						},
+						error: function() {
+							console.error('AJAX request failed while removing detail');
+						}
+					});
 					alert(result.message);
-					console.error('Error updating session:', result.message);
 					$('.flash-error').html(result.message).show();
 					setTimeout(function() {
 						$('.flash-error').fadeOut('slow');
@@ -273,7 +316,20 @@
 		});
 	};
 
-	document.getElementById('add-detail-btn').addEventListener('click', addDetailFunction);
+	//document.getElementById('add-detail-btn').addEventListener('click', addDetailFunction);
+
+	document.getElementById('add-detail-btn').addEventListener('click', function() {
+		addDetailFunction();
+
+		// Using jQuery since Yii typically includes it
+		$('#Penjualan_Customer_ID')
+			.prop('readonly', true)
+			.addClass('disabled-dropdown')
+			.trigger('change'); // Trigger change event if needed
+
+		// If you need to prevent the form from submitting
+		return false;
+	});
 
 	window.removeDetail = function(index) {
 		penjualanDetails.splice(index, 1);
@@ -361,17 +417,19 @@
 				});
 
 				var penjualanDari = $('#PenjualanDetail_Penjualan_Dari').val();
-				updateHarga(masterbarang_id, penjualanDari, '');
+				var customer_id = $('#Penjualan_Customer_ID').val();
+				updateHarga(customer_id, masterbarang_id, penjualanDari, '');
 
 			}
 		});
 	}
 
-	function updateHarga(masterbarang_id, penjualanDari, satuan) {
+	function updateHarga(customer_id, masterbarang_id, penjualanDari, satuan) {
 		$.ajax({
 			type: 'GET',
 			url: '<?php echo Yii::app()->createUrl("masterBarang/getHarga"); ?>',
 			data: {
+				customer_id: customer_id,
 				masterbarang_id: masterbarang_id,
 				penjualanDari: penjualanDari,
 				satuan: satuan
@@ -384,13 +442,13 @@
 	}
 
 	function formatInput(id) {
-        document.getElementById(id).addEventListener('input', function(event) {
-            let input = event.target.value.replace(/[^\d]/g, '');
-            input = Number(input).toLocaleString('id-ID');
-            event.target.value = input;
-        });
-    }
-	
+		document.getElementById(id).addEventListener('input', function(event) {
+			let input = event.target.value.replace(/[^\d]/g, '');
+			input = Number(input).toLocaleString('id-ID');
+			event.target.value = input;
+		});
+	}
+
 	function truncateString(str, firstPartLength, lastPartLength) {
 		// Get the first part of the string
 		var firstPart = str.substring(0, firstPartLength);

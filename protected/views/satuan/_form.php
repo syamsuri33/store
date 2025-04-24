@@ -34,6 +34,11 @@
 			<?php echo $form->error($model, 'HargaOffline'); ?>
 		</div>
 		<div class="form-group">
+			<?php echo $form->labelEx($model, 'HargaGrosir'); ?>
+			<?php echo $form->textField($model, 'HargaGrosir', array('class' => "form-control")); ?>
+			<?php echo $form->error($model, 'HargaGrosir'); ?>
+		</div>
+		<div class="form-group">
 			<?php echo $form->labelEx($model, 'HargaTokped'); ?>
 			<?php echo $form->textField($model, 'HargaTokped', array('class' => "form-control")); ?>
 			<?php echo $form->error($model, 'HargaTokped'); ?>
@@ -53,8 +58,9 @@
 </div><!-- form -->
 
 <script>
-	//typing format idr
+	//typing format idr 
 	formatInput('Satuan_HargaOffline');
+	formatInput('Satuan_HargaGrosir');
     formatInput('Satuan_HargaTokped');
 
 	function formatInput(id) {

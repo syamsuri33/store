@@ -12,14 +12,6 @@
 
 <h1>Pengadaan</h1>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
-
 <?php if (isset($_SESSION['pembelianDetails'])) {
 	var_dump($_SESSION['pembelianDetails']); // Tambahkan ini untuk melihat isi session
 } ?>
@@ -75,7 +67,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 				'viewCustom' => array(
 					'label' => '<i class="fas fa-eye"></i>',
 					'options' => array(
-						'class' => 'btn btn-info btn-sm',
+						'class' => 'btn btn-warning btn-sm',
 						'title' => 'View',
 						'onclick' => 'openModal(this); return false;',
 					),
@@ -89,19 +81,19 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("pembelian/update", array("id"=>$data->Pembelian_ID))', // Generate the URL
-
+					'visible' => '!isset($_GET["pagePembelian"]) || $_GET["pagePembelian"] != "report"',
 				),
 				'deleteCustom' => array(
 					'label' => '<i class="fas fa-trash-alt"></i>',
-					'options' => array('class' => 'btn btn-danger btn-sm', 'title' => 'Delete'),
+					'options' => array('class' => 'btn btn-danger btn-sm delete-confirm', 'title' => 'Delete'),
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("pembelian/deletes", array("id"=>$data->Pembelian_ID))', // Generate the URL
-
+					'visible' => '!isset($_GET["pagePembelian"]) || $_GET["pagePembelian"] != "report"',	
 				),
 			),
 			//'template' => '{updateCustom} {deleteCustom}',
-			'template' => '{viewCustom}',
+			'template' => '{viewCustom} {updateCustom} {deleteCustom}',
 
 		),
 	),

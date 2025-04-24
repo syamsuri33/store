@@ -1,26 +1,23 @@
 <?php
 
 /**
- * This is the model class for table "pembeliandetail".
+ * This is the model class for table "penjualandetaillog".
  *
- * The followings are the available columns in table 'pembeliandetail':
- * @property string $PembelianDetail_ID
+ * The followings are the available columns in table 'penjualandetaillog':
+ * @property string $PenjualanDetailLog_ID
  * @property string $Barang_ID
- * @property string $Pembelian_ID
+ * @property string $PenjualanDetail_ID
  * @property integer $Jumlah
- * @property string $Satuan_ID
- * @property double $Harga
- * @property double $Modal
- * @property string $Expired
+ * @property integer $Jumlah_Awal
  */
-class Pembeliandetail extends CActiveRecord
+class Penjualandetaillog extends CActiveRecord
 {
 	/**
 	 * @return string the associated database table name
 	 */
 	public function tableName()
 	{
-		return 'pembeliandetail';
+		return 'penjualandetaillog';
 	}
 
 	/**
@@ -31,15 +28,11 @@ class Pembeliandetail extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			//array('Barang_ID, Satuan_ID, Jumlah, Harga, Modal, Expired', 'required'),
-			array('Jumlah, Harga, HargaOffline, HargaGrosir, HargaTokped, StatusAktif', 'numerical', 'integerOnly'=>true),
-			//array('Harga, Modal, Diskon', 'numerical'),
-			array('Barang_ID', 'length', 'max'=>255),
-			array('Pembelian_ID', 'length', 'max'=>100),
-			array('Expired', 'safe'),
+			array('Jumlah, Jumlah_Awal', 'numerical', 'integerOnly'=>true),
+			array('Barang_ID, PenjualanDetail_ID', 'length', 'max'=>20),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('PembelianDetail_ID, Barang_ID, Pembelian_ID, Jumlah, Satuan_ID, Harga, Modal, Diskon, Expired, HargaOffline, HargaGrosir, HargaTokped, StatusAktif', 'safe', 'on'=>'search'),
+			array('PenjualanDetailLog_ID, Barang_ID, PenjualanDetail_ID, Jumlah, Jumlah_Awal', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -51,8 +44,6 @@ class Pembeliandetail extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
-			'barang' => array(self::BELONGS_TO, 'Barang', 'Barang_ID'),
-			'satuan' => array(self::BELONGS_TO, 'Satuan', 'Satuan_ID'),
 		);
 	}
 
@@ -62,18 +53,11 @@ class Pembeliandetail extends CActiveRecord
 	public function attributeLabels()
 	{
 		return array(
-			'PembelianDetail_ID' => 'Pembelian Detail',
+			'PenjualanDetailLog_ID' => 'Penjualan Detail Log',
 			'Barang_ID' => 'Barang',
-			'Pembelian_ID' => 'Pembelian',
+			'PenjualanDetail_ID' => 'Penjualan Detail',
 			'Jumlah' => 'Jumlah',
-			'Satuan_ID' => 'Satuan',
-			'Harga' => 'Harga',
-			'Modal' => 'Modal',
-			'Diskon' => 'Diskon',
-			'Expired' => 'Expired',
-			'HargaOffline' => 'Harga Offline',
-			'HargaGrosir' => 'Harga Grosir',
-			'HargaTokped' => 'Harga Tokped',
+			'Jumlah_Awal' => 'Jumlah Awal',
 		);
 	}
 
@@ -95,19 +79,12 @@ class Pembeliandetail extends CActiveRecord
 
 		$criteria=new CDbCriteria;
 
-		$criteria->compare('PembelianDetail_ID',$this->PembelianDetail_ID,true);
+		$criteria->compare('PenjualanDetailLog_ID',$this->PenjualanDetailLog_ID,true);
 		$criteria->compare('Barang_ID',$this->Barang_ID,true);
-		$criteria->compare('Pembelian_ID',$this->Pembelian_ID,true);
+		$criteria->compare('PenjualanDetail_ID',$this->PenjualanDetail_ID,true);
 		$criteria->compare('Jumlah',$this->Jumlah);
-		$criteria->compare('Satuan_ID',$this->Satuan_ID,true);
-		$criteria->compare('Harga',$this->Harga);
-		$criteria->compare('Modal',$this->Modal);
-		$criteria->compare('Diskon',$this->Diskon);
-		$criteria->compare('Expired',$this->Expired,true);
-		//$criteria->compare('StatusAktif', 1);
+		$criteria->compare('Jumlah_Awal',$this->Jumlah_Awal);
 
-		$criteria->condition = 't.StatusAktif = 1';
-		
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
 		));
@@ -117,7 +94,7 @@ class Pembeliandetail extends CActiveRecord
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!
 	 * @param string $className active record class name.
-	 * @return Pembeliandetail the static model class
+	 * @return Penjualandetaillog the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{

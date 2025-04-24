@@ -89,8 +89,10 @@ class MasterbarangController extends Controller
 			$model->attributes = $_POST['Masterbarang'];
 			$model->MasterBarang_ID = $newProdukId;
 			$model->HargaOffline = str_replace('.', '', $model->HargaOffline);
+			$model->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
 			$model->HargaTokped = str_replace('.', '', $model->HargaTokped);
 			$model->MinStok = str_replace('.', '', $model->MinStok);
+			$model->Vendor_ID = $model->Vendor_ID;
 			$model->StatusAktif = 1;
 
 			$kategoriValue = $_POST['Kategori'];
@@ -114,6 +116,7 @@ class MasterbarangController extends Controller
 				$mSatuan->Satuan = 'pcs';
 				$mSatuan->Jumlah = 1;
 				$mSatuan->HargaOffline = str_replace('.', '', $model->HargaOffline);
+				$mSatuan->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
 				$mSatuan->HargaTokped = str_replace('.', '', $model->HargaTokped);
 				$mSatuan->MasterBarang_ID = $newProdukId;
 				$mSatuan->Status = 1;
@@ -142,6 +145,7 @@ class MasterbarangController extends Controller
 		$model = $this->loadModel($id);
 
 		$model->HargaOffline = number_format($model->HargaOffline, 0, '', '.');
+		$model->HargaGrosir = number_format($model->HargaGrosir, 0, '', '.');
 		$model->HargaTokped = number_format($model->HargaTokped, 0, '', '.');
 		$model->MinStok = number_format($model->MinStok, 0, '', '.');
 
@@ -151,13 +155,16 @@ class MasterbarangController extends Controller
 			$model->attributes = $_POST['Masterbarang'];
 
 			$model->HargaOffline = str_replace('.', '', $model->HargaOffline);
+			$model->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
 			$model->HargaTokped = str_replace('.', '', $model->HargaTokped);
 			$model->MinStok = str_replace('.', '', $model->MinStok);
+			$model->Vendor_ID = $model->Vendor_ID;
 
 			if ($model->save()) {
 				//update satuan
 				$satuan = Satuan::model()->findByAttributes(array('MasterBarang_ID' => $id, 'Satuan' => 'pcs'));
 				$satuan->HargaOffline = $model->HargaOffline;
+				$satuan->HargaGrosir = $model->HargaGrosir;
 				$satuan->HargaTokped = $model->HargaTokped;
 				$satuan->save();
 
@@ -198,21 +205,8 @@ class MasterbarangController extends Controller
 	 */
 	public function actionIndex()
 	{
-		if (isset($_GET['nama'])) {
-			$dataProvider = new CActiveDataProvider('Masterbarang', array(
-				'criteria' => array(
-					'condition' => '((t.Kode LIKE "%' . $_GET['nama'] . '%") OR (t.Nama LIKE "%' . $_GET['nama'] . '%")) and t.StatusAktif=1',
-				),
-				'pagination' => array('pageSize' => 10),
-			));
-		} else {
-			$dataProvider = new CActiveDataProvider('Masterbarang', array(
-				'criteria' => array(
-					'condition' => 't.StatusAktif=1',
-				),
-				'pagination' => array('pageSize' => 10),
-			));
-		}
+		$nama = isset($_GET['nama']) ? $_GET['nama'] : null;
+		$dataProvider = Masterbarang::getDataProvider($nama);
 
 		$this->render('index', array(
 			'dataProvider' => $dataProvider,
@@ -250,17 +244,27 @@ class MasterbarangController extends Controller
 
 	public function actionGetHarga()
 	{
+		$Customer_ID = $_GET['customer_id'];
 		$MasterBarang_ID = $_GET['masterbarang_id'];
 		$penjualanDari = $_GET['penjualanDari'];
 
 		if (!empty($_GET['satuan'])) {
 			$mSatuan = Satuan::model()->findByAttributes(array('MasterBarang_ID' => $MasterBarang_ID, 'Satuan_ID' => $_GET['satuan']));
-		}else{
-			$mSatuan = Satuan::model()->findByAttributes(array('MasterBarang_ID' => $MasterBarang_ID, 'Satuan' => 'pcs' ));
+		} else {
+			$mSatuan = Satuan::model()->findByAttributes(array('MasterBarang_ID' => $MasterBarang_ID, 'Satuan' => 'pcs'));
 		}
 
 		if ($penjualanDari == "OFFLINE") {
-			echo $mSatuan->HargaOffline;
+			if (!empty($Customer_ID)) {
+				$mCustomer = Customer::model()->findByPk($Customer_ID);
+				if ($mCustomer->type->Type == "grosir") {
+					echo $mSatuan->HargaGrosir;
+				} else {
+					echo $mSatuan->HargaOffline;
+				}
+			} else {
+				echo $mSatuan->HargaOffline;
+			}
 		} else {
 			echo $mSatuan->HargaTokped;
 		}

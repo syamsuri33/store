@@ -12,14 +12,6 @@
 
 <h1>Penjualan</h1>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
-
 <?php if (isset($_SESSION['penjualanDetails'])) {
 	var_dump($_SESSION['penjualanDetails']); // Tambahkan ini untuk melihat isi session
 } ?>
@@ -69,13 +61,17 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 			'value' => '$data->Tanggal',
 		),
 		array(
+			'name' => 'customer.Nama',
+			'value' => '$data->customer->Nama',
+		),
+		array(
 			'class' => 'bootstrap.widgets.TbButtonColumn',
 			'htmlOptions' => array('style' => 'text-align:center', 'width' => '200px'),
 			'buttons' => array(
 				'viewCustom' => array(
 					'label' => '<i class="fas fa-eye"></i>',
 					'options' => array(
-						'class' => 'btn btn-info btn-sm', 
+						'class' => 'btn btn-warning btn-sm', 
 						'title' => 'View',
 						'onclick' => 'openModal(this); return false;',
 					),
@@ -101,7 +97,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 				),
 			),
 			//'template' => '{updateCustom} {deleteCustom}',
-			'template' => '{viewCustom}',
+			'template' => '{viewCustom} {updateCustom} ',
 
 		),
 	),

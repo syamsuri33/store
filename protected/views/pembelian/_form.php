@@ -12,8 +12,6 @@
 		</div>
 	<?php endif; ?>
 
-	<?php echo $form->hiddenField($model, 'Pembelian_ID', array('value' => $id)); ?>
-
 	<div class="card-body">
 		<div class="form-group">
 			<?php echo $form->labelEx($model, 'Tanggal'); ?>
@@ -99,6 +97,10 @@
 </div>
 
 <script>
+	document.addEventListener('DOMContentLoaded', function() {
+		updateDetailsTable();
+	});
+
 	var pembelianDetails = <?php echo json_encode(Yii::app()->session['pembelianDetails'] ?? []); ?>;
 
 	if (!Array.isArray(pembelianDetails)) {
@@ -119,15 +121,45 @@
 				row.innerHTML = `
                 <td>${detail.barangName}</td>
                 <td>${detail.satuanName}</td>
-                <td>${detail.jumlah}</td>
-				<td>${detail.harga}</td>
-				<td>${detail.diskon}</td>
-				<td>${detail.expired}</td>
+				<td><input type="text" class="form-control" value="${detail.jumlah}" onchange="updateField(${index}, 'jumlah', this.value)"></td>
+				<td><input type="text" class="form-control" value="${detail.harga}" onchange="updateField(${index}, 'harga', this.value)"></td>
+				<td><input type="text" class="form-control" value="${detail.diskon}" onchange="updateField(${index}, 'diskon', this.value)"></td>
+				<td><input type="date" class="form-control" value="${detail.expired}" onchange="updateField(${index}, 'expired', this.value)"></td>
                 <td><button type="button" class="btn btn-danger" onclick="removeDetail(${index})">Remove</button></td>
             `;
 				tbody.appendChild(row);
 			});
 		}
+	}
+
+	function updateField(index, field, value) {
+		if (field === 'jumlah' || field === 'harga' || field === 'diskon') {
+			value = parseFloat(value);
+			if (isNaN(value)) {
+				value = 0;
+				alert(field.charAt(0).toUpperCase() + field.slice(1) + ' must be numbers');
+			}
+		}
+		pembelianDetails[index][field] = value;
+
+		$.ajax({
+			type: 'POST',
+			url: '<?php echo Yii::app()->createUrl("pembelian/updateSessionPembelianDetails"); ?>',
+			data: {
+				pembelianDetails: JSON.stringify(pembelianDetails)
+			},
+			success: function(response) {
+				var result = JSON.parse(response);
+				if (result.status === 'success') {
+					console.log('Session updated successfully');
+				} else {
+					console.error('Error updating session:', result.message);
+				}
+			},
+			error: function() {
+				console.error('AJAX request failed');
+			}
+		});
 	}
 
 	document.getElementById('add-detail-btn').addEventListener('click', function() {
@@ -137,16 +169,26 @@
 		var satuanName = document.querySelector('#PembelianDetail_Satuan_ID option:checked').text;
 		var jumlah = document.getElementById('PembelianDetail_Jumlah').value;
 		var harga = document.getElementById('PembelianDetail_Harga').value;
-		var diskon = -document.getElementById('PembelianDetail_Diskon').value;
+		var diskon = document.getElementById('PembelianDetail_Diskon').value;
 		var expired = document.getElementById('PembelianDetail_Expired').value;
 
-		if (!barangID || !satuanID || !jumlah || !harga || !diskon || !expired) {
+		let removeDotJumlah = jumlah.replace(/\./g, '');
+		let removeDotHarga = harga.replace(/\./g, '');
+		let removeDotDiskon = diskon.replace(/\./g, '');
+
+		if (!barangID || !satuanID || !jumlah || !harga || !expired) {
 			alert('Please fill all fields');
 			return;
 		}
 
-		if (isNaN(jumlah) || isNaN(harga) || isNaN(diskon)) {
-			alert('Jumlah, Harga Satuan and Diskon must be numbers');
+		if (isNaN(removeDotJumlah)) {
+			alert('Jumlah must be numbers');
+			return;
+		}else if(isNaN(removeDotHarga)){
+			alert('Harga Satuan must be numbers');
+			return;
+		}else if(isNaN(removeDotDiskon)){
+			alert('Diskon must be numbers');
 			return;
 		}
 
@@ -157,12 +199,20 @@
 			satuanName: satuanName,
 			jumlah: jumlah,
 			harga: harga,
-			diskon: diskon,
+			diskon: -removeDotDiskon,
 			expired: expired
 		});
 
 		updateDetailsTable();
 
+		//clear value
+		document.querySelector('[id="PembelianDetail_Barang_ID"]').value = "";
+		document.querySelector('[id="PembelianDetail_Satuan_ID"]').value = "";
+		document.querySelector('[id="PembelianDetail_Jumlah"]').value = "";
+		document.querySelector('[id="PembelianDetail_Harga"]').value = "";
+		document.querySelector('[id="PembelianDetail_Diskon"]').value = "";
+		document.querySelector('[id="PembelianDetail_Expired"]').value = "";
+		
 		$.ajax({
 			type: 'POST',
 			url: '<?php echo Yii::app()->createUrl("pembelian/updateSessionPembelianDetails"); ?>',
@@ -277,6 +327,7 @@
 	//typing format idr
 	formatInput('PembelianDetail_Jumlah');
     formatInput('PembelianDetail_Harga');
+	formatInput('PembelianDetail_Diskon');
 
 	function formatInput(id) {
         document.getElementById(id).addEventListener('input', function(event) {

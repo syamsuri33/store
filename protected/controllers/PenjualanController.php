@@ -364,9 +364,25 @@ class PenjualanController extends Controller
 
 		$barangList = CHtml::listData(
 			MasterBarang::model()->findAll(
-				array('condition' => 'StatusAktif=:status', 'params' => array(':status' => 1))
+				array(
+					'condition' => 'StatusAktif=:status',
+					'params' => array(':status' => 1),
+					'order' => 'Nama ASC'
+				)
 			),
 			'MasterBarang_ID',
+			'Nama'
+		);
+
+		$customerList = CHtml::listData(
+			Customer::model()->findAll(
+				array(
+					'condition' => 'Status=:status',
+					'params' => array(':status' => 1),
+					'order' => 'Nama ASC'
+				)
+			),
+			'Customer_ID',
 			'Nama'
 		);
 
@@ -378,6 +394,7 @@ class PenjualanController extends Controller
 			$model->attributes = $_POST['Penjualan'];
 
 			$model->Penjualan_ID = $id;
+			$model->Customer_ID = $model->Customer_ID;
 
 			if (empty(Yii::app()->session['penjualanDetails'])) {
 				Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DETAIL_EMPTY']);
@@ -393,42 +410,23 @@ class PenjualanController extends Controller
 					$minout->Tanggal = $model->Tanggal;
 					$minout->Modul_ID = $model->Penjualan_ID;
 					$minout->Modul	= "PENJUALAN";
+					$minout->Keterangan	= "CREATE";
 					$minout->save();
 
 					if (isset(Yii::app()->session['penjualanDetails'])) {
-						foreach (Yii::app()->session['penjualanDetails'] as $detail) {
+						//check session penjualanDetails
+						// echo "<pre>";
+						// print_r(Yii::app()->session['penjualanDetails']);
+						// echo "</pre>";
+						// exit;
 
+						foreach (Yii::app()->session['penjualanDetails'] as $detail) {
 							$mSatuan = Satuan::model()->findByPk($detail['satuanID']);
 							$total = $mSatuan->Jumlah * $detail['jumlah'];
 
-							$criteria = new CDbCriteria();
-							$criteria->alias = 'barang';
-							$criteria->join = 'LEFT JOIN pembeliandetail pd ON pd.Barang_ID = barang.Barang_ID';
-							$criteria->addCondition('barang.MasterBarang_ID = :barangID');
-							$criteria->params = array(':barangID' => $detail['barangID']);
-							$criteria->order = 'pd.Expired ASC';
-
-							$barangList = Barang::model()->findAll($criteria);
-
-							foreach ($barangList as $mBarang) {
-								if ($mBarang->Jumlah == 0) {
-									continue;
-								}
-
-								if ($mBarang->Jumlah >= $total) {
-									$mBarang->Jumlah -= $total;
-									$mBarang->save();
-									break;
-								} else {
-									$total -= $mBarang->Jumlah;
-									$mBarang->Jumlah = 0;
-									$mBarang->save();
-								}
-							}
-
 							$penjualanDetailModel = new PenjualanDetail;
 							$penjualanDetailModel->Penjualan_ID = $id;
-							$penjualanDetailModel->MasterBarang_ID = $mBarang->MasterBarang_ID;
+							$penjualanDetailModel->MasterBarang_ID = $detail['barangID'];
 							$penjualanDetailModel->Satuan_ID = $detail['satuanID'];
 							$penjualanDetailModel->Jumlah = $detail['jumlah'];
 							$penjualanDetailModel->Harga = $detail['harga'];
@@ -440,12 +438,56 @@ class PenjualanController extends Controller
 								throw new Exception('Error saving penjualan detail.');
 							}
 
+							$criteria = new CDbCriteria();
+							$criteria->alias = 'barang';
+							$criteria->join = 'LEFT JOIN pembeliandetail pd ON pd.Barang_ID = barang.Barang_ID';
+							$criteria->addCondition('barang.MasterBarang_ID = :barangID');
+							$criteria->addCondition('barang.StatusAktif = 1');
+							$criteria->params = array(':barangID' => $detail['barangID']);
+							$criteria->order = 'pd.Expired ASC';
+
+							$barangList = Barang::model()->findAll($criteria);
+
+							foreach ($barangList as $mBarang) {
+								if ($mBarang->Jumlah == 0) {
+									continue;
+								}
+
+								if ($mBarang->Jumlah >= $total) {
+									$log = new Penjualandetaillog;
+									$log->Barang_ID = $mBarang->Barang_ID;
+									$log->PenjualanDetail_ID = $penjualanDetailModel->PenjualanDetail_ID;
+									$log->Jumlah = $total;
+									$log->Jumlah_Awal = $mBarang->Jumlah;
+									$log->save();
+
+									$mBarang->Jumlah -= $total;
+									$mBarang->save();
+
+									break;
+								} else {
+									$log = new Penjualandetaillog;
+									$log->Barang_ID = $mBarang->Barang_ID;
+									$log->PenjualanDetail_ID = $penjualanDetailModel->PenjualanDetail_ID;
+									$log->Jumlah = $mBarang->Jumlah;
+									$log->Jumlah_Awal = $mBarang->Jumlah;
+									$log->save();
+
+									$total -= $mBarang->Jumlah;
+									$mBarang->Jumlah = 0;
+									$mBarang->save();
+								}
+							}
+
 							$minoutline = new Minoutline();
 							$minoutline->Barang_ID = $detail['barangID'];
 							$minoutline->Minout_ID = $minout->Minout_ID;
 							$minoutline->Jumlah = $detail['jumlah'];
 							$minoutline->Satuan_ID = $detail['satuanID'];
 							$minoutline->Harga = $detail['jumlah'];
+							$minoutline->HargaOffline = $mSatuan->HargaOffline;
+							$minoutline->HargaGrosir = $mSatuan->HargaGrosir;
+							$minoutline->HargaTokped = $mSatuan->HargaTokped;
 
 							if (!$minoutline->save()) {
 								throw new Exception('Error saving minoutline.');
@@ -473,6 +515,7 @@ class PenjualanController extends Controller
 			'model' => $model,
 			'penjualanDetail' => $penjualanDetail,
 			'barangList' => $barangList,
+			'customerList' => $customerList,
 		));
 	}
 
@@ -483,19 +526,227 @@ class PenjualanController extends Controller
 	 */
 	public function actionUpdate($id)
 	{
+		//echo '<script>console.log("1");</script>';
 		$model = $this->loadModel($id);
+		$penjualanDetail = new PenjualanDetail;
+		$model->Updated = (new DateTime())->format('Y-m-d H:i:s');
+		$model->UserUpdated_ID = Yii::app()->user->id;
 
-		// Uncomment the following line if AJAX validation is needed
-		// $this->performAjaxValidation($model);
+		$barangList = CHtml::listData(
+			MasterBarang::model()->findAll(
+				array(
+					'condition' => 'StatusAktif=:status',
+					'params' => array(':status' => 1),
+					'order' => 'Nama ASC'
+				)
+			),
+			'MasterBarang_ID',
+			'Nama'
+		);
 
+		$customerList = CHtml::listData(
+			Customer::model()->findAll(
+				array(
+					'condition' => 'Status=:status',
+					'params' => array(':status' => 1),
+					'order' => 'Nama ASC'
+				)
+			),
+			'Customer_ID',
+			'Nama'
+		);
+		//echo '<script>console.log("11");</script>';
+		if (!isset(Yii::app()->session['Penjualan_ID']) || Yii::app()->session['Penjualan_ID'] != $id) {
+			Yii::app()->session['Penjualan_ID'] = $id;
+			Yii::app()->session['penjualanDetails'] = null;
+		}
+
+		if (Yii::app()->session['penjualanDetails'] === null) {
+			$penjualanDetails = Penjualandetail::model()->findAll(array(
+				'condition' => 'Penjualan_ID = :id',
+				'params' => array(':id' => $id)
+			));
+			$details = array();
+			foreach ($penjualanDetails as $detail) {
+				$details[] = array(
+					'id' => $detail->PenjualanDetail_ID,
+					'barangID' => $detail->MasterBarang_ID,
+					'barangName' => $detail->masterBarang->Nama,
+					'satuanID' => $detail->Satuan_ID,
+					'satuanName' => $detail->satuan->Satuan,
+					'jumlah' => $detail->Jumlah,
+					'harga' => (int)$detail->Harga,
+					'penjualanDari' => $detail->Penjualan_Dari,
+				);
+			}
+			Yii::app()->session['penjualanDetails'] = $details;
+		}
+		//echo '<script>console.log("1");</script>';
 		if (isset($_POST['Penjualan'])) {
-			$model->attributes = $_POST['Penjualan'];
-			if ($model->save())
-				$this->redirect(array('view', 'id' => $model->Penjualan_ID));
+			//$transaction = Yii::app()->db->beginTransaction();
+
+			//try {
+				$model->attributes = $_POST['Penjualan'];
+
+				if (!$model->validate()) {
+					throw new Exception('Validation failed for Penjualan model.');
+				}
+
+				if (empty(Yii::app()->session['penjualanDetails'])) {;
+					//echo '<script>console.log("kosong");</script>';
+
+					//reset session
+					Yii::app()->session['penjualanDetails'] = null;
+
+					Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DETAIL_EMPTY']);
+					$this->redirect(array('update', 'id' => $id));
+				}
+
+				// Get all existing detail IDs from database
+				$existingDetails = Penjualandetail::model()->findAllByAttributes(array('Penjualan_ID' => $model->Penjualan_ID));
+				$existingIds = array();
+				foreach ($existingDetails as $detail) {
+					$existingIds[] = $detail->PenjualanDetail_ID;
+				}
+
+				// Get IDs from request
+				$requestIds = array();
+				foreach (Yii::app()->session['penjualanDetails'] as $detail) {
+					if (isset($detail['id'])) {
+						$requestIds[] = $detail['id'];
+					}
+				}
+
+				// Find IDs to delete (present in DB but not in request)
+				$idsToDelete = array_diff($existingIds, $requestIds);
+				// Delete records not in request
+				if (!empty($idsToDelete)) {
+					$barangIds = CHtml::listData(
+						Penjualandetail::model()->findAllByAttributes(array('Penjualan_ID' => $model->Penjualan_ID)),
+						'Barang_ID',
+						'Barang_ID'
+					);
+
+					if (!empty($barangIds)) {
+						echo '<script>console.log("1");</script>';
+						$barangCriteria = new CDbCriteria;
+						$barangCriteria->addInCondition('Barang_ID', $barangIds);
+
+						// Update Jumlah Barang based on penjualandetail->Jumlah
+						$penjualanDetails = Penjualandetail::model()->findAllByAttributes(array('Penjualan_ID' => $model->Penjualan_ID));
+						foreach ($penjualanDetails as $detail) {
+							//findall penjualandetaillog by $detail->penjualan_detail_id
+							$penjualanDetailLog = Penjualandetaillog::model()->findAllByAttributes(array('PenjualanDetail_ID' => $detail->PenjualanDetail_ID));
+							foreach ($penjualanDetailLog as $detailLog) {
+								$barang = Barang::model()->findByPk($detailLog->Barang_ID);
+								if ($barang) {
+									$barang->Jumlah += $detailLog->Jumlah;
+									$barang->save();
+								}
+							}
+						}
+					}
+					echo '<script>console.log("2");</script>';
+					// Delete All PenjualanDetail
+					Penjualandetail::model()->deleteAll('PenjualanDetail_ID IN (:ids)', array(':ids' => implode(',', $idsToDelete)));
+				}
+
+				if ($model->save()) {
+					echo '<script>console.log("3");</script>';
+					$minout = new Minout;
+					$minout->Tanggal = date('Y-m-d H:i:s');
+					$minout->Modul_ID = $model->Penjualan_ID;
+					$minout->Modul	= "PENJUALAN";
+					$minout->Keterangan	= "UPDATE";
+					$minout->save();
+
+					if (isset(Yii::app()->session['penjualanDetails'])) {
+						foreach (Yii::app()->session['penjualanDetails'] as $detail) {
+							$mSatuan = Satuan::model()->findByPk($detail['satuanID']);
+							$total = $mSatuan->Jumlah * $detail['jumlah'];
+							echo '<script>console.log("4");</script>';
+							$penjualanDetailModel = isset($detail['id']) ? PenjualanDetail::model()->findByPk($detail['id']) : null;
+							if ($penjualanDetailModel === null) {
+								echo '<script>console.log("5");</script>';
+								$criteria = new CDbCriteria();
+								$criteria->alias = 'barang';
+								$criteria->join = 'LEFT JOIN pembeliandetail pd ON pd.Barang_ID = barang.Barang_ID';
+								$criteria->addCondition('barang.MasterBarang_ID = :barangID');
+								$criteria->addCondition('barang.StatusAktif = 1');
+								$criteria->params = array(':barangID' => $detail['barangID']);
+								$criteria->order = 'pd.Expired ASC';
+
+								$barangLists = Barang::model()->findAll($criteria);
+
+								foreach ($barangLists as $mBarang) {
+									echo '<script>console.log("6");</script>';
+									if ($mBarang->Jumlah == 0) {
+										continue;
+									}
+
+									if ($mBarang->Jumlah >= $total) {
+										$mBarang->Jumlah -= $total;
+										$mBarang->save();
+										echo '<script>console.log("7");</script>';
+										break;
+									} else {
+										echo '<script>console.log("8");</script>';
+										$total -= $mBarang->Jumlah;
+										$mBarang->Jumlah = 0;
+										$mBarang->save();
+									}
+								}
+
+								$penjualanDetailModel = new PenjualanDetail;
+								$penjualanDetailModel->Penjualan_ID = $id;
+								$penjualanDetailModel->MasterBarang_ID = $mBarang->MasterBarang_ID;
+								$penjualanDetailModel->Satuan_ID = $detail['satuanID'];
+								$penjualanDetailModel->Jumlah = $detail['jumlah'];
+								$penjualanDetailModel->Harga = $detail['harga'];
+								$penjualanDetailModel->Penjualan_Dari = $detail['penjualanDari'];
+								$penjualanDetailModel->HargaOffline = $mSatuan->HargaOffline;
+								$penjualanDetailModel->HargaTokped = $mSatuan->HargaTokped;
+
+								if (!$penjualanDetailModel->save()) {
+									throw new Exception('Error saving penjualan detail.');
+								}
+
+								$minoutline = new Minoutline();
+								$minoutline->Barang_ID = $detail['barangID'];
+								$minoutline->Minout_ID = $minout->Minout_ID;
+								$minoutline->Jumlah = $detail['jumlah'];
+								$minoutline->Satuan_ID = $detail['satuanID'];
+								$minoutline->Harga = $detail['jumlah'];
+								$minoutline->HargaOffline = $mSatuan->HargaOffline;
+								$minoutline->HargaGrosir = $mSatuan->HargaGrosir;
+								$minoutline->HargaTokped = $mSatuan->HargaTokped;
+
+								if (!$minoutline->save()) {
+									throw new Exception('Error saving minoutline.');
+								}
+							} else {
+							}
+						}
+					}
+
+					//$transaction->commit();
+
+					// Yii::app()->session['penjualanDetails'] = null;
+					// Yii::app()->user->setFlash('success', 'Sukses, Data berhasil disimpan');
+					// $this->redirect(array('index', 'pagePenjualan' => 'penjualan'));
+				}
+			// } catch (Exception $e) {
+			// 	$transaction->rollback();
+			// 	echo "Failed to complete the transaction: " . $e->getMessage();
+			// 	Yii::app()->user->setFlash('error', 'Error occurred while saving.');
+			// }
 		}
 
 		$this->render('update', array(
 			'model' => $model,
+			'penjualanDetail' => $penjualanDetail,
+			'barangList' => $barangList,
+			'customerList' => $customerList,
 		));
 	}
 

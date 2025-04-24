@@ -105,11 +105,11 @@
 			if (isNaN(value)) {
 				value = 0;
 				alert(field.charAt(0).toUpperCase() + field.slice(1) + ' must be numbers');
-			} 
+			}
 			operasionalDetails[index].hargaSatuan = operasionalDetails[index].total / operasionalDetails[index].jumlah;
 		}
 		operasionalDetails[index][field] = value;
-		
+
 		console.log(JSON.stringify(operasionalDetails));
 
 		$.ajax({
@@ -157,6 +157,11 @@
 		});
 		//console.log(JSON.stringify(operasionalDetails));
 		updateDetailsTable();
+
+		//clear value
+		document.querySelector('[id="Operasionaldetail_Nama"]').value = "";
+		document.querySelector('[id="Operasionaldetail_Jumlah"]').value = "";
+		document.querySelector('[id="Operasionaldetail_Total"]').value = "";
 
 		$.ajax({
 			type: 'POST',

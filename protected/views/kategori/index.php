@@ -1,13 +1,5 @@
 <h1>Kategori</h1>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
-
 <div class="card card-info">
 	<div class="card-header">
 		<h3 class="card-title">TREE</h3>

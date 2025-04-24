@@ -1,13 +1,5 @@
 <h1>Master Barang</h1>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
-
 <div class="card card-info">
 	<div class="card-header">
 		<h3 class="card-title">Search</h3>
@@ -52,13 +44,13 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 			'type' => 'raw',
 		),
 		array(
-			'name' => 'Kategori_ID',
+			'name' => 'kategori.Kategori',
 			'value' => '$data->kategori->Kategori',
 			'type' => 'raw',
 		),
 		array(
-			'name' => 'Vendor_ID',
-			'value' => '$data->vendor->Vendor',
+			'name' => 'vendor.Vendor',
+			'value' => 'isset($data->vendor->Vendor) ? $data->vendor->Vendor : "-"',
 			'type' => 'raw',
 		),
 		array(
@@ -83,7 +75,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 				),
 				'deleteCustom' => array(
 					'label' => '<i class="fas fa-trash-alt"></i>',
-					'options' => array('class' => 'btn btn-danger btn-sm', 'title' => 'Delete'),
+					'options' => array('class' => 'btn btn-danger btn-sm delete-confirm', 'title' => 'Delete'),
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("masterbarang/deletes", array("id"=>$data->MasterBarang_ID))', // Generate the URL
@@ -95,8 +87,8 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 		),
 	),
 	'pager' => array(
-        'class' => 'bootstrap.widgets.TbPager',
-        'htmlOptions' => array('class' => 'pagination'),
-    ),
+		'class' => 'bootstrap.widgets.TbPager',
+		'htmlOptions' => array('class' => 'pagination'),
+	),
 ));
 ?>

@@ -31,15 +31,15 @@ class Penjualan extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('Penjualan_ID', 'required'),
+			array('Penjualan_ID, Customer_ID', 'required'),
 			array('StatusAktif', 'numerical', 'integerOnly'=>true),
 			array('Total', 'numerical'),
-			array('Penjualan_ID', 'length', 'max'=>255),
+			array('Penjualan_ID, Customer_ID', 'length', 'max'=>255),
 			array('UserCreated_ID, UserUpdated_ID', 'length', 'max'=>100),
-			array('Tanggal, Created, Updated, startDate, endDate', 'safe'),
+			array('Tanggal, Customer_ID, Created, Updated, startDate, endDate', 'safe'),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('Penjualan_ID, Tanggal, Created, UserCreated_ID, Updated, UserUpdated_ID, Total, StatusAktif', 'safe', 'on'=>'search'),
+			array('Penjualan_ID, Tanggal, Customer_ID, Created, UserCreated_ID, Updated, UserUpdated_ID, Total, StatusAktif', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -51,6 +51,7 @@ class Penjualan extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
+			'customer' => array(self::BELONGS_TO, 'Customer', 'Customer_ID'),
 		);
 	}
 
@@ -62,6 +63,7 @@ class Penjualan extends CActiveRecord
 		return array(
 			'Penjualan_ID' => 'Penjualan',
 			'Tanggal' => 'Tanggal',
+			'Customer_ID' => 'Customer',			
 			'Created' => 'Created',
 			'UserCreated_ID' => 'User Created',
 			'Updated' => 'Updated',
@@ -88,7 +90,9 @@ class Penjualan extends CActiveRecord
 		// @todo Please modify the following code to remove attributes that should not be searched.
 
 		$criteria=new CDbCriteria;
-
+		$criteria->with = array('customer');
+		$criteria->together = true;
+		
 		$criteria->compare('Penjualan_ID',$this->Penjualan_ID,true);
 		$criteria->compare('Created',$this->Created,true);
 		$criteria->compare('UserCreated_ID',$this->UserCreated_ID,true);
@@ -111,11 +115,18 @@ class Penjualan extends CActiveRecord
 			$criteria->addCondition('Tanggal <= :endDate');
 			$criteria->params[':endDate'] = date('Y-m-d', strtotime($this->endDate));
 		}
-
-		$criteria->order = 'Created DESC';
 		
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
+			'sort' => array(
+				'defaultOrder' => 't.Created DESC',
+				'attributes' => array(
+					'Created',
+					'Penjualan_ID',
+					'Tanggal',
+					'customer.Nama'
+				),
+			),
 		));
 	}
 

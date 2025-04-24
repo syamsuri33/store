@@ -34,7 +34,7 @@ class PembelianController extends Controller
 			),
 			array(
 				'allow', // allow authenticated user to perform 'create' and 'update' actions
-				'actions' => array('create', 'update', 'updateSessionPembelianDetails', 'exportToExcel', 'getData'),
+				'actions' => array('create', 'update', 'updateSessionPembelianDetails', 'exportToExcel', 'getData', 'deletes'),
 				'users' => array('@'),
 			),
 			array(
@@ -138,7 +138,7 @@ class PembelianController extends Controller
 		);
 
 		$objPHPExcel->getActiveSheet()->getStyle('A1:P2')->applyFromArray($headerStyleArray);
-		
+
 		//start
 		$row = 3;
 
@@ -300,7 +300,8 @@ class PembelianController extends Controller
 		$model->Tanggal = date('Y-m-d');
 		$model->Created = (new DateTime())->format('Y-m-d H:i:s');
 		$model->UserCreated_ID = Yii::app()->user->id;
-
+		$model->StatusAktif = 1;
+		
 		$formattedDate = date('Ymd');
 
 		$lastId = Pembelian::model()->find(array(
@@ -355,15 +356,17 @@ class PembelianController extends Controller
 				if ($model->save()) {
 
 					$minout = new Minout;
-					$minout->Tanggal = $model->Tanggal;
+					$minout->Tanggal = date('Y-m-d H:i:s');
 					$minout->Modul_ID = $model->Pembelian_ID;
 					$minout->Modul	= "PEMBELIAN";
+					$minout->Keterangan	= "CREATE";
 					$minout->save();
 
 					if (isset(Yii::app()->session['pembelianDetails'])) {
 						foreach (Yii::app()->session['pembelianDetails'] as $detail) {
 							$jumlah = str_replace('.', '', $detail['jumlah']);
 							$harga = str_replace('.', '', $detail['harga']);
+							$diskon = str_replace('.', '', $detail['diskon']);
 
 							//$mSatuan = Satuan::model()->findByPk($pembelianDetail->Satuan_ID);
 							$mSatuan = Satuan::model()->findByPk($detail['satuanID']);
@@ -386,9 +389,10 @@ class PembelianController extends Controller
 							$pembelianDetailModel->Satuan_ID = $detail['satuanID'];
 							$pembelianDetailModel->Jumlah = $jumlah;
 							$pembelianDetailModel->Harga = $harga;
-							$pembelianDetailModel->Diskon = $detail['diskon'];
+							$pembelianDetailModel->Diskon = $diskon;
 							$pembelianDetailModel->Expired = $detail['expired'];
 							$pembelianDetailModel->HargaOffline = $mSatuan->HargaOffline;
+							$pembelianDetailModel->HargaGrosir = $mSatuan->HargaGrosir;
 							$pembelianDetailModel->HargaTokped = $mSatuan->HargaTokped;
 
 							if (!$pembelianDetailModel->save()) {
@@ -401,6 +405,9 @@ class PembelianController extends Controller
 							$minoutline->Jumlah = $jumlah;
 							$minoutline->Satuan_ID = $detail['satuanID'];
 							$minoutline->Harga = $harga;
+							$minoutline->HargaOffline = $mSatuan->HargaOffline;
+							$minoutline->HargaGrosir = $mSatuan->HargaGrosir;
+							$minoutline->HargaTokped = $mSatuan->HargaTokped;
 							$minoutline->Diskon = $detail['diskon'];
 							$minoutline->Expired = $detail['expired'];
 
@@ -421,8 +428,8 @@ class PembelianController extends Controller
 				}
 			} catch (Exception $e) {
 				$transaction->rollback();
-				echo "Failed to complete the transaction: " . $e->getMessage();
-				Yii::app()->user->setFlash('error', 'Error occurred while saving.');
+				Yii::log("Transaction failed: " . $e->getMessage(), CLogger::LEVEL_ERROR);
+				Yii::app()->user->setFlash('error', 'Error occurred while saving: ' . $e->getMessage());
 			}
 		}
 
@@ -544,18 +551,212 @@ class PembelianController extends Controller
 	public function actionUpdate($id)
 	{
 		$model = $this->loadModel($id);
+		$pembelianDetail = new PembelianDetail;
+		$model->Updated = (new DateTime())->format('Y-m-d H:i:s');
+		$model->UserUpdated_ID = Yii::app()->user->id;
 
-		// Uncomment the following line if AJAX validation is needed
-		// $this->performAjaxValidation($model);
+
+		$barangList = CHtml::listData(
+			MasterBarang::model()->findAll(
+				array('condition' => 'StatusAktif=:status', 'params' => array(':status' => 1))
+			),
+			'MasterBarang_ID',
+			'Nama'
+		);
+
+		if (!isset(Yii::app()->session['Pembelian_ID']) || Yii::app()->session['Pembelian_ID'] != $id) {
+			Yii::app()->session['Pembelian_ID'] = $id;
+			Yii::app()->session['pembelianDetails'] = null;
+		}
+
+		if (Yii::app()->session['pembelianDetails'] === null) {
+			$pembelianDetails = PembelianDetail::model()->findAll(array(
+				'condition' => 'Pembelian_ID = :id AND StatusAktif = 1',
+				'params' => array(':id' => $id)
+			));
+			$details = array();
+			foreach ($pembelianDetails as $detail) {
+				$details[] = array(
+					'id' => $detail->PembelianDetail_ID,
+					'barangID' => $detail->Barang_ID,
+					'barangName' => $detail->barang->masterbarang->Nama,
+					'satuanID' => $detail->Satuan_ID,
+					'satuanName' => $detail->satuan->Satuan,
+					'jumlah' => $detail->Jumlah,
+					'harga' => (int)$detail->Harga,
+					'diskon' => $detail->Diskon,
+					'expired' => $detail->Expired,
+				);
+			}
+			Yii::app()->session['pembelianDetails'] = $details;
+		}
 
 		if (isset($_POST['Pembelian'])) {
-			$model->attributes = $_POST['Pembelian'];
-			if ($model->save())
-				$this->redirect(array('view', 'id' => $model->Pembelian_ID));
+			$transaction = Yii::app()->db->beginTransaction();
+
+			try {
+				$model->attributes = $_POST['Pembelian'];
+
+				// Validate the model before saving
+				if (!$model->validate()) {
+					throw new Exception('Validation failed for Pembelian model.');
+				}
+
+				if (empty(Yii::app()->session['pembelianDetails'])) {;
+					//echo '<script>console.log("kosong");</script>';
+
+					//reset session
+					Yii::app()->session['pembelianDetails'] = null;
+
+					Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DETAIL_EMPTY']);
+					$this->redirect(array('update', 'id' => $id));
+				}
+
+				// Get all existing detail IDs from database
+				$existingDetails = PembelianDetail::model()->findAllByAttributes(array('Pembelian_ID' => $model->Pembelian_ID));
+				$existingIds = array();
+				foreach ($existingDetails as $detail) {
+					$existingIds[] = $detail->PembelianDetail_ID;
+				}
+
+				// Get IDs from request
+				$requestIds = array();
+				foreach (Yii::app()->session['pembelianDetails'] as $detail) {
+					if (isset($detail['id'])) {
+						$requestIds[] = $detail['id'];
+					}
+				}
+
+				// Find IDs to delete (present in DB but not in request)
+				$idsToDelete = array_diff($existingIds, $requestIds);
+				// Delete records not in request
+				if (!empty($idsToDelete)) {
+					$criteria = new CDbCriteria;
+					$criteria->addInCondition('PembelianDetail_ID', $idsToDelete);
+
+					// Update PembelianDetail StatusAktif to 0
+					PembelianDetail::model()->updateAll(
+						array('StatusAktif' => 0),
+						$criteria
+					);
+
+					// Update Barang StatusAktif to 0
+					$barangIds = CHtml::listData(
+						PembelianDetail::model()->findAll($criteria),
+						'Barang_ID',
+						'Barang_ID'
+					);
+
+					if (!empty($barangIds)) {
+						$barangCriteria = new CDbCriteria;
+						$barangCriteria->addInCondition('Barang_ID', $barangIds);
+
+						Barang::model()->updateAll(
+							array('StatusAktif' => 0),
+							$barangCriteria
+						);
+					}
+				}
+
+				$model->save();
+
+				$minout = new Minout;
+				$minout->Tanggal = date('Y-m-d H:i:s');
+				$minout->Modul_ID = $model->Pembelian_ID;
+				$minout->Modul	= "PEMBELIAN";
+				$minout->Keterangan	= "UPDATE";
+				$minout->save();
+
+				// Update existing records and insert new ones	
+				foreach (Yii::app()->session['pembelianDetails'] as $detail) {
+					$jumlah = str_replace('.', '', $detail['jumlah']);
+					$harga = str_replace('.', '', $detail['harga']);
+					$diskon = str_replace('.', '', $detail['diskon']);
+
+					$mSatuan = Satuan::model()->findByPk($detail['satuanID']);
+					$total = $mSatuan->Jumlah * $jumlah;
+
+					// Check if detail ID exists in session
+					$pembelianDetailModel = isset($detail['id']) ? PembelianDetail::model()->findByPk($detail['id']) : null;
+					if ($pembelianDetailModel === null) {
+
+						$mBarang = new Barang;
+						$mBarang->MasterBarang_ID = $detail['barangID'];
+						$mBarang->Jumlah = $total;
+						$mBarang->StatusAktif = 1;
+						$mBarang->Created = date('Y-m-d H:i:s');
+						$mBarang->UserCreated_ID = Yii::app()->user->id;
+						if (!$mBarang->save()) {
+							throw new Exception('Error saving pembelian detail.');
+						}
+						$barangID = $mBarang->Barang_ID;
+						$pembelianDetailModel = new PembelianDetail;
+						$pembelianDetailModel->Pembelian_ID = $model->Pembelian_ID;
+					} else {
+						$barangID = $detail['barangID'];
+						$mBarang = Barang::model()->findByPk($detail['barangID']);
+
+						$pembelianDetailJumlahConvert = $pembelianDetailModel->Jumlah * $mSatuan->Jumlah;
+						// Check if the quantity has changed
+						if ($mBarang->Jumlah <> $pembelianDetailJumlahConvert) {
+							$mBarang->Jumlah = ($total - $pembelianDetailJumlahConvert) + $mBarang->Jumlah;
+						} else {
+							$mBarang->Jumlah = $total;
+						}
+
+						$mBarang->Updated = date('Y-m-d H:i:s');
+						$mBarang->UserUpdated_ID = Yii::app()->user->id;
+						if (!$mBarang->save()) {
+							throw new Exception('Error saving pembelian detail.');
+						}
+					}
+
+					$pembelianDetailModel->Barang_ID = $barangID;
+					$pembelianDetailModel->Satuan_ID = $detail['satuanID'];
+					$pembelianDetailModel->Jumlah = $jumlah;
+					$pembelianDetailModel->Harga = $harga;
+					$pembelianDetailModel->Diskon = $diskon;
+					$pembelianDetailModel->Expired = $detail['expired'];
+					$pembelianDetailModel->HargaOffline = $mSatuan->HargaOffline;
+					$pembelianDetailModel->HargaGrosir = $mSatuan->HargaGrosir;
+					$pembelianDetailModel->HargaTokped = $mSatuan->HargaTokped;
+
+					$minoutline = new Minoutline();
+					$minoutline->Barang_ID = $barangID;
+					$minoutline->Minout_ID = $minout->Minout_ID;
+					$minoutline->Jumlah = $jumlah;
+					$minoutline->Satuan_ID = $detail['satuanID'];
+					$minoutline->Harga = $harga;
+					$minoutline->HargaOffline = $mSatuan->HargaOffline;
+					$minoutline->HargaGrosir = $mSatuan->HargaGrosir;
+					$minoutline->HargaTokped = $mSatuan->HargaTokped;
+					$minoutline->Diskon = $diskon;
+					$minoutline->Expired = $detail['expired'];
+					if (!$minoutline->save()) {
+						throw new Exception('Error saving minoutline.');
+					}
+
+					if (!$pembelianDetailModel->save()) {
+						throw new Exception('Error saving pembelian detail.');
+					}
+				}
+
+				$transaction->commit();
+
+				Yii::app()->session['pembelianDetails'] = null;
+				Yii::app()->user->setFlash('success', 'Sukses, Data berhasil disimpan');
+				$this->redirect(array('index', 'pagePembelian' => 'pembelian'));
+			} catch (Exception $e) {
+				$transaction->rollback();
+				echo "Failed to complete the transaction: " . $e->getMessage();
+				Yii::app()->user->setFlash('error', 'Error occurred while saving.');
+			}
 		}
 
 		$this->render('update', array(
 			'model' => $model,
+			'pembelianDetail' => $pembelianDetail,
+			'barangList' => $barangList,
 		));
 	}
 
@@ -573,6 +774,69 @@ class PembelianController extends Controller
 			$this->redirect(isset($_POST['returnUrl']) ? $_POST['returnUrl'] : array('admin'));
 	}
 
+	public function actionDeletes($id)
+	{
+		$transaction = Yii::app()->db->beginTransaction();
+		try {
+		$model = Pembelian::model()->findByPk($id);
+		$model->StatusAktif = 0;
+		$model->Updated = date('Y-m-d H:i:s');
+		$model->UserUpdated_ID = Yii::app()->user->id;
+
+		if ($model->save()) {
+			$minout = new Minout;
+			$minout->Tanggal = date('Y-m-d H:i:s');
+			$minout->Modul_ID = $model->Pembelian_ID;
+			$minout->Modul	= "PEMBELIAN";
+			$minout->Keterangan	= "DELETE";
+			$minout->save();
+
+			$criteria = new CDbCriteria();
+			$criteria->condition = 'Pembelian_ID=:id';
+			$criteria->params = array(':id' => $id);
+			$criteria->addCondition('StatusAktif = 1');
+			$pembelianDetail = PembelianDetail::model()->findAll($criteria);
+			foreach ($pembelianDetail as $item) {
+				$minoutline = new Minoutline();
+				$minoutline->Barang_ID = $item->Barang_ID;
+				$minoutline->Minout_ID = $minout->Minout_ID;
+				$minoutline->Jumlah = $item->Jumlah;
+				$minoutline->Satuan_ID = $item->Satuan_ID;
+				$minoutline->Harga = $item->Harga;
+				$minoutline->HargaOffline = $item->HargaOffline;
+				$minoutline->HargaGrosir = $item->HargaGrosir;
+				$minoutline->HargaTokped = $item->HargaTokped;
+				$minoutline->Diskon = $item->Diskon;
+				$minoutline->Expired = $item->Expired;
+				$minoutline->save();
+
+				$mBarang = Barang::model()->findByPk($item->Barang_ID);
+				$mBarang->StatusAktif = 0;
+				$mBarang->Updated = date('Y-m-d H:i:s');
+				$mBarang->UserUpdated_ID = Yii::app()->user->id;
+				$mBarang->save();
+			}
+
+			$criteria = new CDbCriteria();
+			$criteria->condition = 'Pembelian_ID=:id';
+			$criteria->params = array(':id' => $id);
+			$criteria->addCondition('StatusAktif = 1');
+			PembelianDetail::model()->updateAll(array('StatusAktif' => 0), $criteria);
+
+			$transaction->commit();
+
+			Yii::app()->user->setFlash('success', Yii::app()->params['FLASH_DELETE_SUCCESS']);
+			$this->redirect(array('index', 'pagePembelian' => 'pembelian'));
+		} else {
+			Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DELETE_FAILED']);
+			$this->redirect(array('index', 'pagePembelian' => 'pembelian'));
+		}
+	} catch (Exception $e) {
+        $transaction->rollback();
+        Yii::log('Error in actionDeletes: ' . $e->getMessage(), CLogger::LEVEL_ERROR);
+        Yii::app()->user->setFlash('error', Yii::app()->params['FLASH_DELETE_FAILED'] . ' ' . $e->getMessage());
+    }
+	}
 	/**
 	 * Lists all models.
 	 */

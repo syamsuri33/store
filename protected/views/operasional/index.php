@@ -1,12 +1,16 @@
-<h1>Operasionals</h1>
+<style>
+	.modal{
+		left: auto !important;
+		right: auto !important;
+		margin-left: auto !important;
+		margin: auto !important;
+		display: flex !important;
+		-ms-flex-align: center !important;
+		align-items: center !important;
+	}
+</style>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
+<h1>Operasionals</h1>
 
 <div class="card card-info">
 	<div class="card-header">
@@ -52,11 +56,15 @@
 			'htmlOptions' => array('style' => 'text-align:center', 'width' => '200px'),
 			'buttons' => array(
 				'viewCustom' => array(
-					'label' => '<i class="fas fa-eye"></i> view',
-					'options' => array('class' => 'btn btn-info btn-sm', 'title' => 'View'),
+					'label' => '<i class="fas fa-eye"></i>',
+					'options' => array(
+						'class' => 'btn btn-warning btn-sm', 
+						'title' => 'View',
+						'onclick' => 'openModal(this); return false;',
+					),
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
-					'url' => 'Yii::app()->createUrl("operasional/view", array("id"=>$data->Operasional_ID))', // Generate the URL
+					'url' => 'Yii::app()->createUrl("operasional/getData", array("id"=>$data->Operasional_ID))', // Generate the URL
 
 				),
 				'updateCustom' => array(
@@ -65,18 +73,18 @@
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("operasional/update", array("id"=>$data->Operasional_ID))', // Generate the URL
-
+					'visible' => '!isset($_GET["pageOperasional"]) || $_GET["pageOperasional"] != "report"',
 				),
 				'deleteCustom' => array(
 					'label' => '<i class="fas fa-trash-alt"></i>',
-					'options' => array('class' => 'btn btn-danger btn-sm', 'title' => 'Delete'),
+					'options' => array('class' => 'btn btn-danger btn-sm delete-confirm', 'title' => 'Delete'),
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("operasional/deletes", array("id"=>$data->Operasional_ID))', // Generate the URL
-
+					'visible' => '!isset($_GET["pageOperasional"]) || $_GET["pageOperasional"] != "report"',
 				),
 			),
-			'template' => '{updateCustom} {deleteCustom}',
+			'template' => '{viewCustom} {updateCustom} {deleteCustom}',
 
 		),
 	),
@@ -86,3 +94,37 @@
 	),
 ));
 ?>
+
+<!-- Modal -->
+<div class="modal fade" id="dataModal" style="display: none; width:70% !important;" tabindex="-1" role="dialog" aria-labelledby="dataModalLabel" aria-hidden="true">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h5 class="modal-title" id="dataModalLabel">Detail</h5>
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="modal-body" id="dataContent">
+		</div>
+	</div>
+</div>
+
+<script>
+	function openModal(button) {
+		var url = $(button).attr('href');
+		$('#dataContent').html('');
+
+		$.ajax({
+			url: url,
+			type: 'GET',
+			success: function(data) {
+				$('#dataContent').html(data);
+				$('#dataModal').modal('show');
+			},
+			error: function(jqXHR, textStatus, errorThrown) {
+				console.error("Error loading data: " + textStatus, errorThrown);
+				$('#dataContent').html('<p>Error loading data.</p>');
+			}
+		});
+	}
+</script>

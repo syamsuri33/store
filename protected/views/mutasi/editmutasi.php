@@ -21,13 +21,6 @@
 </style>
 
 <div class="form">
-	<?php if(Yii::app()->user->hasFlash('error')):?>
-		<div class="flash-error"><?php echo Yii::app()->user->getFlash('error'); ?></div>
-	<?php endif; ?>
-	<?php Yii::app()->clientScript->registerScript('fade',"
-			setTimeout(function() { $('.flash-error').fadeOut('slow'); }, 8000);	
-		");
-	?>
 	
 	<?php 
 		$form=$this->beginWidget('bootstrap.widgets.TbActiveForm', array(

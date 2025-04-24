@@ -33,7 +33,7 @@ class Minout extends CActiveRecord
 			array('Modul_ID, Modul', 'length', 'max'=>255),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('Minout_ID, Tanggal, Modul_ID, Modul, Total', 'safe', 'on'=>'search'),
+			array('Minout_ID, Tanggal, Modul_ID, Modul, Keterangan, Total', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -58,6 +58,7 @@ class Minout extends CActiveRecord
 			'Tanggal' => 'Tanggal',
 			'Modul_ID' => 'Modul',
 			'Modul' => 'Modul',
+			'Keterangan' => 'Keterangan',
 			'Total' => 'Total',
 		);
 	}
@@ -84,6 +85,7 @@ class Minout extends CActiveRecord
 		$criteria->compare('Tanggal',$this->Tanggal,true);
 		$criteria->compare('Modul_ID',$this->Modul_ID,true);
 		$criteria->compare('Modul',$this->Modul,true);
+		$criteria->compare('Keterangan',$this->Keterangan,true);
 		$criteria->compare('Total',$this->Total);
 
 		return new CActiveDataProvider($this, array(

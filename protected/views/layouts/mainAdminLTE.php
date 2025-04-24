@@ -62,7 +62,10 @@ if (!empty(Yii::app()->user->role)) {
   <!-- summernote -->
   <link rel="stylesheet" href="plugins/summernote/summernote-bs4.min.css">
 
-
+  <!-- toastr -->
+  <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="<?php echo Yii::app()->request->baseUrl; ?>/css/toastr.min.css">
+  <script src="<?php echo Yii::app()->request->baseUrl; ?>/js/toastr.min.js"></script>
 
 
   <title><?php echo CHtml::encode($this->pageTitle); ?></title>
@@ -92,10 +95,10 @@ if (!empty(Yii::app()->user->role)) {
   }
   ?>
 
-<?php
-//   if (isset(Yii::app()->controller->getActionParams()['pageOperasional'])) {
-//     $pageOperasional = Yii::app()->controller->getActionParams()['pageOperasional'];
-// }
+  <?php
+  //   if (isset(Yii::app()->controller->getActionParams()['pageOperasional'])) {
+  //     $pageOperasional = Yii::app()->controller->getActionParams()['pageOperasional'];
+  // }
 
   if (
     $pagePembelian == 'report' ||
@@ -352,6 +355,60 @@ if (!empty(Yii::app()->user->role)) {
   <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
   <script src="dist/js/pages/dashboard.js"></script>
 
+
+  <script>
+    // Toastr options (customize as needed)
+    toastr.options = {
+      "closeButton": true,
+      "progressBar": true,
+      "positionClass": "toast-bottom-right",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000"
+    };
+
+    // Check for flash messages and display them
+    <?php if (Yii::app()->user->hasFlash('success')): ?>
+      toastr.success("<?php echo Yii::app()->user->getFlash('success'); ?>");
+    <?php endif; ?>
+
+    <?php if (Yii::app()->user->hasFlash('error')): ?>
+      toastr.error("<?php echo Yii::app()->user->getFlash('error'); ?>");
+    <?php endif; ?>
+
+    $(document).on('click', '.delete-confirm', function(e) {
+
+      e.preventDefault();
+      toastr.remove();
+      // Get ID from the href (URL)
+      var deleteUrl = $(this).attr('href');
+      var id = new URL(deleteUrl, window.location.origin).searchParams.get("id");
+
+      console.log("ID:", id); // for confirmation
+
+      var toast = toastr.warning(
+        '<div style="margin-bottom:10px;">Are you sure you want to delete this item?</div>' +
+        '<div>' +
+        '<button class="btn btn-danger btn-xs confirm-delete" style="margin-right:5px;">Yes, Delete</button>' +
+        '<button class="btn btn-default btn-xs cancel-delete">Cancel</button>' +
+        '</div>',
+        'Confirm Deletion', {
+          closeButton: true,
+          timeOut: 0,
+          extendedTimeOut: 0,
+          tapToDismiss: true,
+          positionClass: 'toast-center-custom',
+          onShown: function() {
+            $('.confirm-delete').off('click').on('click', function() {
+              window.location.href = deleteUrl;
+            });
+            $('.cancel-delete').off('click').on('click', function() {
+              toastr.clear(toast);
+            });
+          }
+        }
+      );
+    });
+  </script>
 </body>
 
 </html>

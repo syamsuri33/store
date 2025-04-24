@@ -31,13 +31,13 @@ class Minoutline extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('Jumlah, Satuan_ID, Diskon', 'numerical', 'integerOnly'=>true),
+			array('Jumlah, Harga, HargaOffline, HargaGrosir, HargaTokped, Satuan_ID, Diskon', 'numerical', 'integerOnly'=>true),
 			array('Barang_ID', 'length', 'max'=>255),
 			array('Minout_ID, Harga, Modal', 'length', 'max'=>20),
 			array('Expired', 'safe'),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('MinoutLine_ID, Barang_ID, Minout_ID, Jumlah, Satuan_ID, Harga, Modal, Diskon, Expired', 'safe', 'on'=>'search'),
+			array('MinoutLine_ID, Barang_ID, Minout_ID, Jumlah, Satuan_ID, Harga, HargaOffline, HargaGrosir, HargaTokped, Modal, Diskon, Expired', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -64,6 +64,9 @@ class Minoutline extends CActiveRecord
 			'Jumlah' => 'Jumlah',
 			'Satuan_ID' => 'Satuan',
 			'Harga' => 'Harga',
+			'HargaOffline' => 'Harga Offline',
+			'HargaGrosir' => 'HargaGrosir',
+			'HargaTokped' => 'HargaTokped',
 			'Modal' => 'Modal',
 			'Diskon' => 'Diskon',
 			'Expired' => 'Expired',
@@ -94,6 +97,9 @@ class Minoutline extends CActiveRecord
 		$criteria->compare('Jumlah',$this->Jumlah);
 		$criteria->compare('Satuan_ID',$this->Satuan_ID);
 		$criteria->compare('Harga',$this->Harga,true);
+		$criteria->compare('HargaOffline',$this->HargaOffline,true);
+		$criteria->compare('HargaGrosir',$this->HargaGrosir,true);
+		$criteria->compare('HargaTokped',$this->HargaTokped,true);			
 		$criteria->compare('Modal',$this->Modal,true);
 		$criteria->compare('Diskon',$this->Diskon,true);
 		$criteria->compare('Expired',$this->Expired,true);

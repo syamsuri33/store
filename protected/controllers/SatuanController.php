@@ -76,7 +76,8 @@ class SatuanController extends Controller
 
 			$model->attributes = $_POST['Satuan'];
 			$model->HargaOffline = str_replace('.', '', $model->HargaOffline);
-    		$model->HargaTokped = str_replace('.', '', $model->HargaTokped);
+			$model->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
+			$model->HargaTokped = str_replace('.', '', $model->HargaTokped);
 			$model->Status = 1;
 
 			$findDuplikat = Satuan::model()->find(array(
@@ -116,19 +117,22 @@ class SatuanController extends Controller
 		$model = $this->loadModel($id);
 
 		$model->HargaOffline = number_format($model->HargaOffline, 0, '', '.');
+		$model->HargaGrosir = number_format($model->HargaGrosir, 0, '', '.');
 		$model->HargaTokped = number_format($model->HargaTokped, 0, '', '.');
 
 		if (isset($_POST['Satuan'])) {
 			$model->attributes = $_POST['Satuan'];
 
 			$model->HargaOffline = str_replace('.', '', $model->HargaOffline);
+			$model->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
 			$model->HargaTokped = str_replace('.', '', $model->HargaTokped);
 
 			if ($model->save()) {
-				if($model->Satuan == 'pcs'){
+				if ($model->Satuan == 'pcs') {
 					//update masterBarang
 					$mMasterBarang = Masterbarang::model()->findByPk($model->MasterBarang_ID);
 					$mMasterBarang->HargaOffline = str_replace('.', '', $model->HargaOffline);
+					$mMasterBarang->HargaGrosir = str_replace('.', '', $model->HargaGrosir);
 					$mMasterBarang->HargaTokped = str_replace('.', '', $model->HargaTokped);
 					$mMasterBarang->save();
 				}
@@ -170,26 +174,10 @@ class SatuanController extends Controller
 
 	public function actionIndex()
 	{
-		if (isset($_GET['nama'])) {
-			$criteria = new CDbCriteria();
-			$criteria->with = array('masterbarang');
-			$criteria->together = true;
-			$criteria->condition = '(t.Satuan LIKE :nama OR masterbarang.Nama LIKE :nama) AND t.Status=1';
-			$criteria->params = array(':nama' => '%' . $_GET['nama'] . '%');
-			$dataProvider = new CActiveDataProvider('Satuan', array(
-				'criteria' => $criteria,
-			));
-		} else {
-			$dataProvider = new CActiveDataProvider(
-				'Satuan',
-				array(
-					'criteria' => array(
-						'condition' => 't.Status=1',
-					),
-				)
-			);
-		}
 
+		$nama = isset($_GET['nama']) ? $_GET['nama'] : null;
+		$dataProvider = Satuan::getDataProvider($nama);
+		
 		$this->render('index', array(
 			'dataProvider' => $dataProvider,
 		));

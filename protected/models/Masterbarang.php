@@ -32,13 +32,13 @@ class Masterbarang extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('Kode, Nama, Kategori_ID, Vendor_ID, HargaOffline, HargaTokped, MinStok', 'required'),
+			array('Kode, Nama, Kategori_ID, HargaOffline, HargaGrosir, HargaTokped, MinStok', 'required'),
 			array('StatusAktif', 'numerical', 'integerOnly'=>true),
-			array('HargaOffline, HargaTokped, MinStok', 'numerical'),
-			array('MasterBarang_ID, Kode, Nama, Kategori_ID, Keterangan, Barcode', 'length', 'max'=>255),
+			array('HargaOffline, HargaGrosir, HargaTokped, MinStok', 'numerical'),
+			array('MasterBarang_ID, Kode, Nama, Kategori_ID, Vendor_ID, Keterangan, Barcode', 'length', 'max'=>255),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('MasterBarang_ID, Kode, Nama, Kategori_ID, Vendor_ID, Keterangan, HargaOffline, HargaTokped, Barcode, MinStok, StatusAktif', 'safe', 'on'=>'search'),
+			array('MasterBarang_ID, Kode, Nama, Kategori_ID, Vendor_ID, Keterangan, HargaOffline, HargaGrosir, HargaTokped, Barcode, MinStok, StatusAktif', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -68,6 +68,7 @@ class Masterbarang extends CActiveRecord
 			'Vendor_ID' => 'Vendor',
 			'Keterangan' => 'Keterangan',
 			'HargaOffline' => 'Harga Offline',
+			'HargaGrosir' => 'Harga Grosir',
 			'HargaTokped' => 'Harga Tokped',
 			'Barcode' => 'Barcode',
 			'MinStok' => 'Min Stok',
@@ -100,6 +101,7 @@ class Masterbarang extends CActiveRecord
 		$criteria->compare('Vendor_ID',$this->Vendor_ID,true);
 		$criteria->compare('Keterangan',$this->Keterangan,true);
 		$criteria->compare('HargaOffline',$this->HargaOffline);
+		$criteria->compare('HargaGrosir',$this->HargaGrosir);
 		$criteria->compare('HargaTokped',$this->HargaTokped);
 		$criteria->compare('Barcode',$this->Barcode,true);
 		$criteria->compare('MinStok',$this->MinStok);
@@ -110,6 +112,32 @@ class Masterbarang extends CActiveRecord
 		));
 	}
 
+	public static function getDataProvider($nama = null)
+	{
+		$criteria = new CDbCriteria();
+		$criteria->with = array('kategori','vendor');
+		$criteria->together = true;
+
+		$criteria->condition = 't.StatusAktif=1';
+
+		if ($nama !== null) {
+			$criteria->addCondition('(t.Nama LIKE :nama OR kategori.Kategori LIKE :nama OR vendor.Vendor LIKE :nama)');
+			$criteria->params[':nama'] = '%' . $nama . '%';
+		}
+
+		return new CActiveDataProvider('Masterbarang', array(
+			'criteria' => $criteria,
+			'sort' => array(
+				'defaultOrder' => 't.MasterBarang_ID DESC',
+				'attributes' => array(
+					'Kode',
+					'Nama',
+					'kategori.Kategori',
+					'vendor.Vendor'
+				),
+			),
+		));
+	}
 	/**
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!

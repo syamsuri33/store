@@ -102,11 +102,19 @@ class Pembelian extends CActiveRecord
 			$criteria->addCondition('Tanggal <= :endDate');
 			$criteria->params[':endDate'] = date('Y-m-d', strtotime($this->endDate));
 		}
-
-		$criteria->order = 'Created DESC';
+		
+		$criteria->addCondition('StatusAktif = 1');
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
+			'sort' => array(
+				'defaultOrder' => 't.Created DESC',
+				'attributes' => array(
+					'Created',
+					'Pembelian_ID',
+					'Tanggal'
+				),
+			),
 		));
 	}
 

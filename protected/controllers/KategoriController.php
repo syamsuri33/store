@@ -66,39 +66,118 @@ class KategoriController extends Controller
 					// Muat spreadsheet
 					$objPHPExcel = PHPExcel_IOFactory::load($inputFileName);
 					$sheetData = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
+					$no = 1;
 
+					$this->validation($sheetData);
+					
 					// Loop melalui data dan simpan ke database
 					foreach ($sheetData as $row) {
-						// Asumsikan tabel database memiliki kolom 'Kategori_ID', 'Parent', 'Kode', dan 'Kategori'
-						$dataModel = new Kategori();
-						$dataModel->Kategori_ID = isset($row['A']) ? $row['A'] : null;
-						$dataModel->Parent = isset($row['B']) ? $row['B'] : null;
-						$dataModel->Kode = isset($row['C']) ? $row['C'] : null; // Sesuaikan dengan struktur Excel Anda
-						$dataModel->Kategori = isset($row['C']) ? $row['C'] : null; // Sesuaikan dengan struktur Excel Anda
-						$dataModel->Status = 1; // Set status ke 1
+						$kategoriIDParent = null;
+						if($no > 1){
 
-						// Simpan model dan periksa kesalahan
-						if (!$dataModel->save()) {
-							$this->redirect(array('site/cs'));
+							if(!empty($row['a'])){
+								$findId = Kategori::model()->find(array(
+									'condition' => 'Kategori = :kategori',
+									'params' => array(':kategori' => $row['a'])
+								));
+								$kategoriIDParent = $findId->Kategori_ID;
+							}
+								
+							$lastId = Kategori::model()->find(array(
+								'condition' => 'Kategori_ID LIKE :id',
+								'params' => array(':id' => Yii::app()->user->getState('Kode_Cabang') . '-%'),
+								'order' => 'Kategori_ID DESC'
+							));
+				
+							if ($lastId) {
+								//awal ex 1-00001
+								$firstDashPos = strpos($lastId->Kategori_ID, '-'); // jadi 1
+								$number = substr($lastId->Kategori_ID, $firstDashPos + 1); // '00001'
+								$incrementedNumber = str_pad((int)$number + 1, strlen($number), '0', STR_PAD_LEFT); //00002
+								$id = Yii::app()->user->getState('Kode_Cabang') . "-" . $incrementedNumber;
+							} else {
+								$id = Yii::app()->user->getState('Kode_Cabang') . "-00001";
+							}
+							
+							$dataModel = new Kategori();
+							$dataModel->Kategori_ID = $id;
+							$dataModel->Parent = $kategoriIDParent;
+							$dataModel->Kode = isset($row['B']) ? $row['B'] : null; // Sesuaikan dengan struktur Excel Anda
+							$dataModel->Kategori = isset($row['C']) ? $row['C'] : null; // Sesuaikan dengan struktur Excel Anda
+							$dataModel->Status = 1; // Set status ke 1
+							
+							if (!$dataModel->save()) {
+								$this->redirect(array('site/cs'));
+							}
 						}
+						$no++;						
 					}
 
 					// Redirect atau tampilkan pesan sukses
-					$this->redirect(array('site/index2')); // Sesuaikan redirect sesuai kebutuhan
+					$this->redirect(array('kategori/index')); // Sesuaikan redirect sesuai kebutuhan
 				} catch (Exception $e) {
 					// Catat pesan pengecualian
 					Yii::log("Kesalahan saat memuat file: " . $e->getMessage(), CLogger::LEVEL_ERROR);
 					Yii::app()->user->setFlash('error', 'Kesalahan saat memuat file: ' . $e->getMessage());
-					$this->redirect(array('site/index1')); // Sesuaikan redirect sesuai kebutuhan
+					$this->redirect(array('kategori/index')); // Sesuaikan redirect sesuai kebutuhan
 				}
 			} else {
 				// Tangani kesalahan
-				Yii::app()->user->setFlash('error', 'Kesalahan unggah file: ' . $file['error']);
-				$this->redirect(array('site/indexz')); // Sesuaikan redirect sesuai kebutuhan
+				Yii::app()->user->setFlash('error', 'Gagal Upload');
+				$this->redirect(array('kategori/index')); // Sesuaikan redirect sesuai kebutuhan
 			}
 		}
 
 		$this->render('upload');
+	}
+
+	public function validation($sheetData)
+	{
+		$errors = array();
+		$no = 1;
+		foreach ($sheetData as $row) {
+			//validasi tidak boleh kosong
+			if (empty($row['B'])) {
+				$errors[] = 'Kolom Kode tidak boleh kosong pada baris ke - ' . $no;
+			}
+			if (empty($row['C'])) {
+				$errors[] = 'Kolom Kategori tidak boleh kosong pada baris ke - ' . $no;
+			}
+
+			if(!empty($row['A'])){
+				$findId = Kategori::model()->find(array(
+					'condition' => 'Kategori = :kategori',
+					'params' => array(':kategori' => $row['A'])
+				));
+				if (!$findId) {
+					$errors[] = 'Parent Kategori tidak ditemukan pada baris ke - ' . $no;
+				}
+
+			}
+
+			//validasi tidak boleh ada yang sama
+			$findId = Kategori::model()->find(array(
+				'condition' => 'Kategori = :kategori',
+				'params' => array(':kategori' => $row['C'])
+			));
+			if ($findId) {
+				$errors[] = 'Kategori sudah ada pada baris ke - ' . $no;
+			}
+			//validasi tidak boleh ada yang sama
+			$findId = Kategori::model()->find(array(
+				'condition' => 'Kode = :kode',
+				'params' => array(':kode' => $row['B'])
+			));
+			if ($findId) {
+				$errors[] = 'Kode sudah ada pada baris ke - ' . $no;
+			}
+			
+			$no++;
+		}
+
+		if (!empty($errors)) {
+			throw new Exception(implode(', ', $errors));
+		}
 	}
 
 	public function actionView($id)

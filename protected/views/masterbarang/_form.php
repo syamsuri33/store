@@ -54,6 +54,12 @@
 		</div>
 
 		<div class="form-group">
+			<?php echo $form->labelEx($model, 'HargaGrosir'); ?>
+			<?php echo $form->textField($model, 'HargaGrosir', array('class' => "form-control")); ?>
+			<?php echo $form->error($model, 'HargaGrosir'); ?>
+		</div>
+
+		<div class="form-group">
 			<?php echo $form->labelEx($model, 'HargaTokped'); ?>
 			<?php echo $form->textField($model, 'HargaTokped', array('class' => "form-control")); ?>
 			<?php echo $form->error($model, 'HargaTokped'); ?>
@@ -105,10 +111,15 @@
     }
 
     const hargaOfflineInput = document.getElementById('Masterbarang_HargaOffline');
+	const hargaGrosirInput = document.getElementById('Masterbarang_HargaGrosir');	
     const hargaTokpedInput = document.getElementById('Masterbarang_HargaTokped');
 	const minStokInput = document.getElementById('Masterbarang_MinStok');
 
     hargaOfflineInput.addEventListener('input', function (e) {
+        formatNumberInput(e.target);
+    });
+
+	hargaGrosirInput.addEventListener('input', function (e) {
         formatNumberInput(e.target);
     });
 

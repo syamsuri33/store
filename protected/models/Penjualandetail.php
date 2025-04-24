@@ -30,13 +30,13 @@ class Penjualandetail extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('Jumlah, Satuan_ID, HargaOffline, HargaTokped', 'numerical', 'integerOnly'=>true),
+			array('Jumlah, Satuan_ID, HargaOffline, HargaGrosir, HargaTokped', 'numerical', 'integerOnly'=>true),
 			array('MasterBarang_ID, Penjualan_ID', 'length', 'max'=>255),
 			array('Harga', 'length', 'max'=>20),
 			array('Penjualan_Dari', 'length', 'max'=>9),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('PenjualanDetail_ID, MasterBarang_ID, Penjualan_ID, Jumlah, Satuan_ID, Harga, Penjualan_Dari, HargaOffline, HargaTokped', 'safe', 'on'=>'search'),
+			array('PenjualanDetail_ID, MasterBarang_ID, Penjualan_ID, Jumlah, Satuan_ID, Harga, Penjualan_Dari, HargaOffline, HargaGrosir, HargaTokped', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -67,6 +67,7 @@ class Penjualandetail extends CActiveRecord
 			'Harga' => 'Harga',
 			'Penjualan_Dari' => 'Penjualan Dari',
 			'HargaOffline' => 'Harga Offline',
+			'HargaGrosir' => 'Harga Grosir',			
 			'HargaTokped' => 'Harga Tokped',
 		);
 	}

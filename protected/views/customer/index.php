@@ -1,13 +1,5 @@
 <h1>Customer</h1>
 
-<?php if (Yii::app()->user->hasFlash('success')): ?>
-	<div class="flash-success"><?php echo Yii::app()->user->getFlash('success'); ?></div>
-<?php endif; ?>
-<?php Yii::app()->clientScript->registerScript('fade', "
-		setTimeout(function() { $('.flash-success').fadeOut('slow'); }, 4000);	
-	");
-?>
-
 <div class="card card-info">
 	<div class="card-header">
 		<h3 class="card-title">Search</h3>
@@ -55,8 +47,8 @@
 			'type' => 'raw',
 		),
 		array(
-			'name' => 'Type',
-			'value' => '$data->Type',
+			'name' => 'type.Type',
+			'value' => '$data->type->Type',
 			'type' => 'raw',
 		),
 		array(
@@ -81,7 +73,7 @@
 				),
 				'deleteCustom' => array(
 					'label' => '<i class="fas fa-trash-alt"></i>',
-					'options' => array('class' => 'btn btn-danger btn-sm', 'title' => 'Delete'),
+					'options' => array('class' => 'btn btn-danger btn-sm delete-confirm', 'title' => 'Delete'),
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("customer/deletes", array("id"=>$data->Customer_ID))', // Generate the URL
