@@ -97,7 +97,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 				),
 			),
 			//'template' => '{updateCustom} {deleteCustom}',
-			'template' => '{viewCustom} {updateCustom} ',
+			'template' => '{viewCustom}',
 
 		),
 	),
