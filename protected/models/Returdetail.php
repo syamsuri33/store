@@ -1,30 +1,29 @@
 <?php
 
 /**
- * This is the model class for table "barang".
+ * This is the model class for table "returdetail".
  *
- * The followings are the available columns in table 'barang':
+ * The followings are the available columns in table 'returdetail':
+ * @property string $ReturDetail_ID
  * @property string $Barang_ID
- * @property string $MasterBarang_ID
- * @property integer $StatusPPN
+ * @property string $Retur_ID
  * @property integer $Jumlah
- * @property string $Satuan_ID
- * @property double $Harga
- * @property double $Modal
- * @property integer $StatusAktif
- * @property string $Created
- * @property string $UserCreated_ID
- * @property string $Updated
- * @property string $UserUpdated_ID
+ * @property integer $Satuan_ID
+ * @property string $Harga
+ * @property string $Penjualan_Dari
+ * @property double $HargaOffline
+ * @property double $HargaGrosir
+ * @property double $HargaTokped
+ * @property string $Alasan
  */
-class Barang extends CActiveRecord
+class Returdetail extends CActiveRecord
 {
 	/**
 	 * @return string the associated database table name
 	 */
 	public function tableName()
 	{
-		return 'barang';
+		return 'returdetail';
 	}
 
 	/**
@@ -35,13 +34,14 @@ class Barang extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('Jumlah, JumlahRusak, StatusAktif', 'numerical', 'integerOnly'=>true),
-			array('MasterBarang_ID', 'length', 'max'=>9),
-			array('UserCreated_ID, UserUpdated_ID', 'length', 'max'=>50),
-			array('Created, Updated', 'safe'),
+			array('Jumlah, ModulDetail_ID, Satuan_ID', 'numerical', 'integerOnly'=>true),
+			array('HargaOffline, HargaGrosir, HargaTokped', 'numerical'),
+			array('Barang_ID, Retur_ID, Alasan', 'length', 'max'=>255),
+			array('Harga', 'length', 'max'=>20),
+			array('Penjualan_Dari', 'length', 'max'=>9),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('Barang_ID, MasterBarang_ID, Jumlah, JumlahRusak, PembelianDetail_ID, StatusAktif, Created, UserCreated_ID, Updated, UserUpdated_ID', 'safe', 'on'=>'search'),
+			array('ReturDetail_ID, ModulDetail_ID, Barang_ID, Retur_ID, Jumlah, Satuan_ID, Harga, Penjualan_Dari, HargaOffline, HargaGrosir, HargaTokped, Alasan', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -53,8 +53,8 @@ class Barang extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
-            'masterbarang' => array(self::BELONGS_TO, 'MasterBarang', 'MasterBarang_ID'),
-        );
+      'satuan' => array(self::BELONGS_TO, 'Satuan', 'Satuan_ID'),
+		);
 	}
 
 	/**
@@ -63,15 +63,18 @@ class Barang extends CActiveRecord
 	public function attributeLabels()
 	{
 		return array(
+			'ReturDetail_ID' => 'Retur Detail',
+      'ModulDetail_ID' => 'ModulDetail_ID',      
 			'Barang_ID' => 'Barang',
-			'MasterBarang_ID' => 'Master Barang',
+			'Retur_ID' => 'Retur',
 			'Jumlah' => 'Jumlah',
-      'JumlahRusak' => 'Jumlah Rusak',
-			'StatusAktif' => 'Status Aktif',
-			'Created' => 'Created',
-			'UserCreated_ID' => 'User Created',
-			'Updated' => 'Updated',
-			'UserUpdated_ID' => 'User Updated',
+			'Satuan_ID' => 'Satuan',
+			'Harga' => 'Harga',
+			'Penjualan_Dari' => 'Penjualan Dari',
+			'HargaOffline' => 'Harga Offline',
+			'HargaGrosir' => 'Harga Grosir',
+			'HargaTokped' => 'Harga Tokped',
+			'Alasan' => 'Alasan',
 		);
 	}
 
@@ -93,15 +96,18 @@ class Barang extends CActiveRecord
 
 		$criteria=new CDbCriteria;
 
+		$criteria->compare('ReturDetail_ID',$this->ReturDetail_ID,true);
+    $criteria->compare('ModulDetail_ID',$this->ModulDetail_ID,true);
 		$criteria->compare('Barang_ID',$this->Barang_ID,true);
-		$criteria->compare('MasterBarang_ID',$this->MasterBarang_ID,true);
+		$criteria->compare('Retur_ID',$this->Retur_ID,true);
 		$criteria->compare('Jumlah',$this->Jumlah);
-    $criteria->compare('JumlahRusak',$this->JumlahRusak);
-		$criteria->compare('StatusAktif',$this->StatusAktif);
-		$criteria->compare('Created',$this->Created,true);
-		$criteria->compare('UserCreated_ID',$this->UserCreated_ID,true);
-		$criteria->compare('Updated',$this->Updated,true);
-		$criteria->compare('UserUpdated_ID',$this->UserUpdated_ID,true);
+		$criteria->compare('Satuan_ID',$this->Satuan_ID);
+		$criteria->compare('Harga',$this->Harga,true);
+		$criteria->compare('Penjualan_Dari',$this->Penjualan_Dari,true);
+		$criteria->compare('HargaOffline',$this->HargaOffline);
+		$criteria->compare('HargaGrosir',$this->HargaGrosir);
+		$criteria->compare('HargaTokped',$this->HargaTokped);
+		$criteria->compare('Alasan',$this->Alasan,true);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
@@ -112,7 +118,7 @@ class Barang extends CActiveRecord
 	 * Returns the static model of the specified AR class.
 	 * Please note that you should have this exact method in all your CActiveRecord descendants!
 	 * @param string $className active record class name.
-	 * @return Barang the static model class
+	 * @return Returdetail the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{

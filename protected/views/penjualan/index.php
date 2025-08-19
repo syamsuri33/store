@@ -58,7 +58,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 		),
 		array(
 			'name' => 'Tanggal',
-			'value' => '$data->Tanggal',
+			'value' => 'Yii::app()->formatter->formatDate($data->Tanggal)',
 		),
 		array(
 			'name' => 'customer.Nama',
@@ -85,7 +85,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("penjualan/update", array("id"=>$data->Penjualan_ID))', // Generate the URL
-
+          'visible' => '!isset($_GET["pagePenjualan"]) || $_GET["pagePenjualan"] != "report"',
 				),
 				'deleteCustom' => array(
 					'label' => '<i class="fas fa-trash-alt"></i>',
@@ -93,7 +93,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 					'imageUrl' => false, // Disable default image
 					'encodeLabel' => false, // Ensure HTML is rendered correctly
 					'url' => 'Yii::app()->createUrl("penjualan/deletes", array("id"=>$data->Penjualan_ID))', // Generate the URL
-
+          'visible' => '!isset($_GET["pagePenjualan"]) || $_GET["pagePenjualan"] != "report"',
 				),
 			),
 			//'template' => '{updateCustom} {deleteCustom}',

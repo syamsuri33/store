@@ -58,7 +58,7 @@ $this->widget('bootstrap.widgets.TbGridView', array(
 		),
 		array(
 			'name' => 'Tanggal',
-			'value' => '$data->Tanggal',
+			'value' => 'Yii::app()->formatter->formatDate($data->Tanggal)',
 		),
 		array(
 			'class' => 'bootstrap.widgets.TbButtonColumn',

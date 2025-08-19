@@ -77,6 +77,7 @@ if (!empty(Yii::app()->user->role)) {
   $pagePembelian = isset($_GET['pagePembelian']) ? $_GET['pagePembelian'] : '';
   $pagePenjualan = isset($_GET['pagePenjualan']) ? $_GET['pagePenjualan'] : '';
   $pageOperasional = isset($_GET['pageOperasional']) ? $_GET['pageOperasional'] : '';
+  $pageRetur = isset($_GET['pageRetur']) ? $_GET['pageRetur'] : '';
   ?>
 
   <?php
@@ -103,7 +104,8 @@ if (!empty(Yii::app()->user->role)) {
   if (
     $pagePembelian == 'report' ||
     $pagePenjualan == 'report' ||
-    $pageOperasional == 'report'
+    $pageOperasional == 'report' ||
+    $pageRetur == 'report'
 
   ) {
     $menuReportli = "menu-open";
@@ -211,6 +213,14 @@ if (!empty(Yii::app()->user->role)) {
                 </p>
               </a>
             </li>
+            <li class="nav-item">
+              <a href="<?php echo Yii::app()->createUrl('retur/index', array('pageRetur' => 'retur')); ?>" class="nav-link <?php echo (Yii::app()->controller->id == 'retur' && $pageRetur != 'report') ? 'active' : ''; ?>">
+                <i class="nav-icon fas fa-undo"></i>
+                <p>
+                  Retur
+                </p>
+              </a>
+            </li>
 
             <li class="nav-item <?php echo $menuMasterli; ?>">
               <a href="#" class="nav-link <?php echo $menuMasteraHref; ?>">
@@ -260,17 +270,22 @@ if (!empty(Yii::app()->user->role)) {
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <?php echo CHtml::link('<i class="far fa-circle nav-icon"></i>Operasional', array('operasional/index&pageOperasional=report'), array('class' => 'nav-link ' . (Yii::app()->controller->id == 'operasional' && $pageOperasional == 'report' ? 'active' : ''))); ?>
-                </li>
-              </ul>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
                   <?php echo CHtml::link('<i class="far fa-circle nav-icon"></i>List Pengadaan', array('pembelian/index&pagePembelian=report'), array('class' => 'nav-link ' . (Yii::app()->controller->id == 'pembelian' && $pagePembelian == 'report' ? 'active' : ''))); ?>
                 </li>
               </ul>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
                   <?php echo CHtml::link('<i class="far fa-circle nav-icon"></i>List Penjualan', array('penjualan/index&pagePenjualan=report'), array('class' => 'nav-link ' . (Yii::app()->controller->id == 'penjualan' && $pagePenjualan == 'report' ? 'active' : ''))); ?>
+                </li>
+              </ul>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <?php echo CHtml::link('<i class="far fa-circle nav-icon"></i>Operasional', array('operasional/index&pageOperasional=report'), array('class' => 'nav-link ' . (Yii::app()->controller->id == 'operasional' && $pageOperasional == 'report' ? 'active' : ''))); ?>
+                </li>
+              </ul>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <?php echo CHtml::link('<i class="far fa-circle nav-icon"></i>Retur', array('retur/index&pageRetur=report'), array('class' => 'nav-link ' . (Yii::app()->controller->id == 'report' && $pageRetur == 'report' ? 'active' : ''))); ?>
                 </li>
               </ul>
             </li>

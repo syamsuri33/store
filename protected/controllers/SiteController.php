@@ -98,15 +98,13 @@ class SiteController extends Controller
 	{
 		if ($dashboard == "totalBarang") {
 			$criteria = new CDbCriteria();
-			$criteria->condition = 'StatusAktif=:statusAktif';
-			$criteria->params = array(':statusAktif' => 1);
 			$criteria->order = 't.Nama ASC';
-			$model = Masterbarang::model()->findAll($criteria);
+			$model = Totalbarang::model()->findAll($criteria);
 		} elseif ($dashboard == "stokLimit") {
 			$criteria = new CDbCriteria();
 			$criteria->select = 't.Nama, t.MinStok, SUM(b.TotalJumlah) AS Keterangan';
 			$criteria->join = 'JOIN (SELECT MasterBarang_ID, SUM(Jumlah) AS TotalJumlah FROM Barang GROUP BY MasterBarang_ID) b ON t.MasterBarang_ID = b.MasterBarang_ID';
-			$criteria->condition = 't.MinStok > b.TotalJumlah';
+			$criteria->condition = 't.MinStok > b.TotalJumlah and t.StatusAktif = 1';
 			$criteria->group = 't.Nama';
 			$model = Masterbarang::model()->findAll($criteria);
 		} elseif ($dashboard == "totalPenjualan") {

@@ -31,7 +31,7 @@ class Totalbarang extends CActiveRecord
 			array('TotalJumlah', 'length', 'max'=>41),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('Barang_ID, MasterBarang_ID, TotalJumlah', 'safe', 'on'=>'search'),
+			array('Barang_ID, Nama, MasterBarang_ID, TotalJumlah', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -43,6 +43,7 @@ class Totalbarang extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
+      'masterBarang' => array(self::BELONGS_TO, 'Masterbarang', 'MasterBarang_ID'),
 		);
 	}
 

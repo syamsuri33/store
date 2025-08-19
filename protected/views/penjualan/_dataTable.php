@@ -1,5 +1,5 @@
 <?php if ($model): ?>
-    <b>Penjualan Tanggal: <?php echo $model->Tanggal; ?></b>
+    <b>Penjualan Tanggal: <?php echo Yii::app()->formatter->formatDate($model->Tanggal); ?></b>
     <h5>Detail:</h5>
     <table class="table table-bordered" id="details-table">
         <thead>

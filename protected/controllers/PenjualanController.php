@@ -432,6 +432,7 @@ class PenjualanController extends Controller
 							$penjualanDetailModel->Harga = $detail['harga'];
 							$penjualanDetailModel->Penjualan_Dari = $detail['penjualanDari'];
 							$penjualanDetailModel->HargaOffline = $mSatuan->HargaOffline;
+              $penjualanDetailModel->HargaTokped = $mSatuan->HargaGrosir;
 							$penjualanDetailModel->HargaTokped = $mSatuan->HargaTokped;
 
 							if (!$penjualanDetailModel->save()) {
@@ -658,7 +659,7 @@ class PenjualanController extends Controller
 							echo '<script>console.log("5");</script>';
 
 							$penjualanDetailModel = new PenjualanDetail;
-							$penjualanDetailModel->Penjualan_ID = $id;
+							$penjualanDetailModel->Penjualan_ID = $model->Penjualan_ID;
 							$penjualanDetailModel->MasterBarang_ID = $detail['barangID'];
 							$penjualanDetailModel->Satuan_ID = $detail['satuanID'];
 							$penjualanDetailModel->Jumlah = $detail['jumlah'];
